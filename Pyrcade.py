@@ -100,35 +100,45 @@ class sprite:
     def data(self):
         pixel_data = self.readable_data[0]                                                 
         color_data = self.readable_data[1]                                                 
-        engine_data = []                                                    
+        pixel_raw_data = []
+        color_raw_data = []                                                    
         for row in range(self.height):                                                                                                                                        
             for pixel in range(self.width):
                 index = (row * self.width) + pixel
                 if self.color_mode == "sub_pixel":                                     
                     if pixel_data[index] != "nop":                                                                                          
-                        engine_pixel_data = ""                                                 
+                        engine_pixel_data = ""
+                        engine_color_data = ""                                                 
                         for sub_pixel in range(len(pixel_data[index])):
-                            if pixel_data[index][sub_pixel] == " ":       
-                                engine_pixel_data += " "                                        
+                            if color_data[index][sub_pixel] == " ":
+                                engine_color_data += ""
+                                engine_pixel_data += str(pixel_data[index][sub_pixel])
                             else:
-                                engine_pixel_data += str(sprite_color_codes.get(color_data[index][sub_pixel], "") + pixel_data[index][sub_pixel])
-                        engine_data.append(engine_pixel_data)
+                                engine_color_data += str(sprite_color_codes.get(color_data[index][sub_pixel], ""))
+                                engine_pixel_data += str(pixel_data[index][sub_pixel])
+                        pixel_raw_data.append(engine_pixel_data)
+                        color_raw_data.append(engine_color_data)
                     else:
-                        engine_data.append("nop")  
+                        pixel_raw_data.append("nop")
+                        color_raw_data.append("")  
                 elif self.color_mode == "pixel":
                     if pixel_data[index] != "nop":
                         if color_data[index] == " ":
-                            engine_data.append(str(pixel_data[index]))
+                            pixel_raw_data.append(str(pixel_data[index]))
+                            color_raw_data.append("")
                         else:
-                            engine_data.append(str(sprite_color_codes.get(color_data[index], "") + pixel_data[index]))
+                            pixel_raw_data.append(str(pixel_data[index]))
+                            color_raw_data.append(str(sprite_color_codes.get(color_data[index], "")))
                     else:
-                        engine_data.append("nop")
+                        pixel_raw_data.append("nop")
                 elif self.color_mode == "single":
                     if pixel_data[index] != "nop":
-                        engine_data.append(color_data + pixel_data[index])
+                        pixel_raw_data.append(pixel_data[index])
+                        color_raw_data.append(color_data)
                     else:
-                        engine_data.append("nop")
-        return engine_data   
+                        pixel_raw_data.append("nop")
+                        color_raw_data.append("")
+        return (pixel_raw_data, color_raw_data)   
                     
 class screen:
     def __init__(self, height: int, width: int):
@@ -152,28 +162,31 @@ class screen:
         for pixel in text_pixel_data:
             if layer != 0:
                 if bg != "":
-                    self.memory[y][x][layer] = f"{bg}{fg}{pixel}"
+                    self.pixel_memory[y][x][layer] = f"{pixel}"
+                    self.color_memory[y][x][layer] = f"{bg}{fg}"
                 else:
-                    self.memory[y][x][layer] = f"{self.memory[y][x][0]}{fg}{pixel}"
+                    self.pixel_memory[y][x][layer] = f"{pixel}"
+                    self.color_memory[y][x][layer] = f"{self.color_memory[y][x][0]}{fg}"
             x += 1
 
     def create_sprite(self, x: int, y: int, layer: int, sprite: sprite):
-        write_data = sprite.data()
+        pixel_write_data, color_write_data = sprite.data()
         for row in range(sprite.height):
             for column in range(sprite.width):
                 if layer != 0:
-                    if write_data[(row * sprite.width) + column] != "nop":
-                        self.pixel_memory[y + row][x + column][layer] = write_data[(row * sprite.width) + column]
+                    if pixel_write_data[(row * sprite.width) + column] != "nop":
+                        self.pixel_memory[y + row][x + column][layer] = pixel_write_data[(row * sprite.width) + column]
                     else:
                         self.pixel_memory[y + row][x + column][layer] = "   "
+                        self.color_memory[y + row][x + column][layer] = ""
 
     def create_pixel(self, x: int, y: int, layer: int, pixel_data: Tuple[str, str, str]):
         px, fg, bg = pixel_data
         if layer != 0:
             if bg != "":
-                self.memory[y][x][layer] = f"{bg}{fg}{px}"
+                self.pixel_memory[y][x][layer] = f"{px}"
             else:
-                self.memory[y][x][layer] = f"{self.memory[y][x][0]}{fg}{px}"
+                self.pixel_memory[y][x][layer] = f"{px}"
 
     def initialize(self, layers: int, bg_color: str):
         self.layers = layers
@@ -198,7 +211,7 @@ class screen:
                     if layer == 0:
                         worklist[height_line][width_line].append(self.bg_color)
                     else:
-                        worklist[height_line][width_line].append("   ")
+                        worklist[height_line][width_line].append("")
         self.color_blank = worklist 
 
     def memory_reset(self):
@@ -209,13 +222,22 @@ class screen:
         for height_line in range(self.height):
             final_bake.append([])
             layered_pixel = ""
+            layered_color = ""
             for width_line in range(self.width):
-                pixel = self.memory[height_line][width_line][0]
-                layered_pixel = self.memory[height_line][width_line]
+                pixel = self.pixel_memory[height_line][width_line][0]
+                color = self.color_memory[height_line][width_line][0]
+                layered_pixel = self.pixel_memory[height_line][width_line]
+                layered_color = self.color_memory[height_line][width_line]
                 for pixel_data in layered_pixel:
                     if pixel_data != "   ":
                         pixel = pixel_data
                 final_bake[height_line].append(pixel)
+                for color_data in layered_color:
+                    if color_data != "":
+                        if color_data[2] == "3":
+                            color = color_data
+                        elif color_data[2] == "4":
+                            color += color_data
         self.screen = final_bake
     
     def print_screen(self):
