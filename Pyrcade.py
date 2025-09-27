@@ -97,7 +97,7 @@ class sprite:
             elif color_mode == "single":
                 color_data = " "
         self.readable_data = (sprite_data, color_data)
-        if len(sprite_data) != len(color_data):
+        if (len(sprite_data) != len(color_data)) or (len(sprite_data) != self.width * self.height):
             self.valid_data = False
     
     def data(self):
