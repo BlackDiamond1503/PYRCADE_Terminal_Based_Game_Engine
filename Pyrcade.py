@@ -3,32 +3,32 @@ from typing import Literal, Tuple
 from copy import deepcopy
 
 initial_datetime = ""
-def log(type: Literal["initial", "systrem", "warning", "info", "error"], message = None):
+def log(type: Literal["initial", "system", "warning", "info", "error"], message = None):
     global initial_datetime
-    date_and_time = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+    date_and_time = datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")
     if type == "initial":
-        with open(f"logs/pynput_log_{date_and_time}") as log_file:
-            log_file.write(f"{date_and_time} - pyrcade engine starting...")
-            log_file.write(f"{date_and_time} - starting logging system...")
+        with open(f"logs/{date_and_time} - pynput_log", "w") as log_file:
+            log_file.write(f"{date_and_time} - pyrcade engine starting...\n")
+            log_file.write(f"{date_and_time} - starting logging system...\n")
             initial_datetime = date_and_time
     elif type == "system":
-        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
-            log_file.write(f"{date_and_time} - system - {message}")
+        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
+            log_file.write(f"{date_and_time} - system - {message}\n")
     elif type == "warning":
-        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
-            log_file.write(f"{date_and_time} - warning - {message}")
+        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
+            log_file.write(f"{date_and_time} - warning - {message}\n")
     elif type == "info":
-        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
-            log_file.write(f"{date_and_time} - info - {message}")
+        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
+            log_file.write(f"{date_and_time} - info - {message}\n")
     elif type == "error":
-        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
-            log_file.write(f"{date_and_time} - error - {message}")
+        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
+            log_file.write(f"{date_and_time} - error - {message}\n")
     else:
-        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
-            log_file.write(f"{date_and_time} - error - invalid log message!")
+        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
+            log_file.write(f"{date_and_time} - error - invalid log message!\n")
 
 log("initial")
-log("systrem", "loading foreground color ansi escape codes...")
+log("system", "loading foreground color ansi escape codes...")
 fgcolor = {"black"          : "\u001b[38;5;0m", 
            "red"            : "\u001b[38;5;1m",
            "green"          : "\u001b[38;5;2m",
@@ -46,7 +46,7 @@ fgcolor = {"black"          : "\u001b[38;5;0m",
            "intense_cyan"   : "\u001b[38;5;14m",
            "intense_white"  : "\u001b[38;5;15m"}
 
-log("systrem", "loading background color ansi escape codes...")
+log("system", "loading background color ansi escape codes...")
 bgcolor = {"black"          : "\u001b[48;5;0m", 
            "red"            : "\u001b[48;5;1m", 
            "green"          : "\u001b[48;5;2m",
@@ -64,13 +64,13 @@ bgcolor = {"black"          : "\u001b[48;5;0m",
            "intense_cyan"   : "\u001b[48;5;14m",
            "intense_white"  : "\u001b[48;5;15m"}
 
-log("systrem", "starting color module...")
+log("system", "starting color module...")
 class color: 
     def __init__(self, colorkey: str):
         self.fg = fgcolor[colorkey]
         self.bg = bgcolor[colorkey]
 
-log("systrem", "loading color pallette with color module...")
+log("system", "loading color pallette with color module...")
 black = color("black")  
 intense_black = color("intense_black")  
 red = color("red")
@@ -88,7 +88,7 @@ intense_cyan = color("intense_cyan")
 white = color("white")
 intense_white = color("intense_white")
 
-log("systrem", "starting color codes translator dictionary...")
+log("system", "starting color codes translator dictionary...")
 sprite_color_codes = {"k" : black.fg, 
                       "K" : intense_black.fg, 
                       "r" : red.fg,
@@ -106,7 +106,7 @@ sprite_color_codes = {"k" : black.fg,
                       "w" : white.fg,
                       "W" : intense_white.fg}
 
-log("systrem", "starting sprite module...")
+log("system", "starting sprite module...")
 class sprite:
     def __init__(self, name, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "sub_pixel"] = "single", color_data: list[str] = None, fg_color: str = intense_cyan.fg):
         self.width = width
@@ -157,7 +157,7 @@ class sprite:
                         color_raw_data.append("")
         return (pixel_raw_data, color_raw_data)   
 
-      
+
 class screen:
     def __init__(self, height: int, width: int):
         self.height = height
