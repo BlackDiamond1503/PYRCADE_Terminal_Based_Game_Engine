@@ -1,10 +1,34 @@
-import time
-import sys
-import pynput
-import random
+import time, os, sys, pynput, random, datetime
 from typing import Literal, Tuple
 from copy import deepcopy
 
+initial_datetime = ""
+def log(type: Literal["initial", "systrem", "warning", "info", "error"], message = None):
+    global initial_datetime
+    date_and_time = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+    if type == "initial":
+        with open(f"logs/pynput_log_{date_and_time}") as log_file:
+            log_file.write(f"{date_and_time} - pyrcade engine starting...")
+            log_file.write(f"{date_and_time} - starting logging system...")
+            initial_datetime = date_and_time
+    elif type == "system":
+        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
+            log_file.write(f"{date_and_time} - system - {message}")
+    elif type == "warning":
+        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
+            log_file.write(f"{date_and_time} - warning - {message}")
+    elif type == "info":
+        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
+            log_file.write(f"{date_and_time} - info - {message}")
+    elif type == "error":
+        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
+            log_file.write(f"{date_and_time} - error - {message}")
+    else:
+        with open(f"logs/pynput_log_{initial_datetime}") as log_file:
+            log_file.write(f"{date_and_time} - error - invalid log message!")
+
+log("initial")
+log("systrem", "loading foreground color ansi escape codes...")
 fgcolor = {"black"          : "\u001b[38;5;0m", 
            "red"            : "\u001b[38;5;1m",
            "green"          : "\u001b[38;5;2m",
@@ -22,6 +46,7 @@ fgcolor = {"black"          : "\u001b[38;5;0m",
            "intense_cyan"   : "\u001b[38;5;14m",
            "intense_white"  : "\u001b[38;5;15m"}
 
+log("systrem", "loading background color ansi escape codes...")
 bgcolor = {"black"          : "\u001b[48;5;0m", 
            "red"            : "\u001b[48;5;1m", 
            "green"          : "\u001b[48;5;2m",
@@ -39,11 +64,13 @@ bgcolor = {"black"          : "\u001b[48;5;0m",
            "intense_cyan"   : "\u001b[48;5;14m",
            "intense_white"  : "\u001b[48;5;15m"}
 
+log("systrem", "starting color module...")
 class color: 
     def __init__(self, colorkey: str):
         self.fg = fgcolor[colorkey]
         self.bg = bgcolor[colorkey]
 
+log("systrem", "loading color pallette with color module...")
 black = color("black")  
 intense_black = color("intense_black")  
 red = color("red")
@@ -61,6 +88,7 @@ intense_cyan = color("intense_cyan")
 white = color("white")
 intense_white = color("intense_white")
 
+log("systrem", "starting color codes translator dictionary...")
 sprite_color_codes = {"k" : black.fg, 
                       "K" : intense_black.fg, 
                       "r" : red.fg,
@@ -78,19 +106,17 @@ sprite_color_codes = {"k" : black.fg,
                       "w" : white.fg,
                       "W" : intense_white.fg}
 
+log("systrem", "starting sprite module...")
 class sprite:
-    def __init__(self, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "sub_pixel"] = "single", color_data: list[str] = None, fg_color: str = intense_cyan.fg):
+    def __init__(self, name, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "sub_pixel"] = "single", color_data: list[str] = None, fg_color: str = intense_cyan.fg):
         self.width = width
         self.height = height
         self.color_mode = color_mode
         self.fg = fg_color
         self.valid_data = True
-        if color_data == None:
-            if color_mode == "sub_pixel":
-                color_data = []
-                for px in range(len(sprite_data)):
-                    color_data.append("   ")
-            elif color_mode == "pixel":
+        if color_data != list:
+            log("error", f"invalid color data! sprite:{name}, color_data.type:{type(color_data)}")
+            if color_mode == "pixel":
                 color_data = []
                 for px in range(len(sprite_data)):
                     color_data.append(" ")
@@ -99,6 +125,7 @@ class sprite:
         self.readable_data = (sprite_data, color_data)
         if (len(sprite_data) != len(color_data)) or (len(sprite_data) != self.width * self.height):
             self.valid_data = False
+            log("error", f"invalid sprite data! sprite:{name}, intended_data.size:{width*height}, sprite_data.size:{len(sprite_data)}, color_data.size:{len(color_data)}")
     
     def data(self):
         if self.valid_data == False:
@@ -129,7 +156,8 @@ class sprite:
                         pixel_raw_data.append("nop")
                         color_raw_data.append("")
         return (pixel_raw_data, color_raw_data)   
-                    
+
+      
 class screen:
     def __init__(self, height: int, width: int):
         self.height = height
