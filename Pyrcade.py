@@ -1,31 +1,19 @@
-import time, os, sys, pynput, random, datetime
+import time, sys, pynput, random, datetime
 from typing import Literal, Tuple
 from copy import deepcopy
 
 initial_datetime = ""
-def log(type: Literal["initial", "system", "warning", "info", "error"], message = None):
+def log(type: Literal["initial", "system", "warning", "info", "error", "arcade"], message = None):
     global initial_datetime
     date_and_time = datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")
     if type == "initial":
-        with open(f"logs/{date_and_time} - pynput_log", "w") as log_file:
+        with open(f"logs/{date_and_time} - pynput_log.txt", "w") as log_file:
             log_file.write(f"{date_and_time} - pyrcade engine starting...\n")
             log_file.write(f"{date_and_time} - starting logging system...\n")
             initial_datetime = date_and_time
-    elif type == "system":
-        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
-            log_file.write(f"{date_and_time} - system - {message}\n")
-    elif type == "warning":
-        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
-            log_file.write(f"{date_and_time} - warning - {message}\n")
-    elif type == "info":
-        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
-            log_file.write(f"{date_and_time} - info - {message}\n")
-    elif type == "error":
-        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
-            log_file.write(f"{date_and_time} - error - {message}\n")
     else:
-        with open(f"logs/{initial_datetime} - pynput_log", "a") as log_file:
-            log_file.write(f"{date_and_time} - error - invalid log message!\n")
+        with open(f"logs/{initial_datetime} - pynput_log.txt", "a") as log_file:
+            log_file.write(f"{date_and_time} - {type} - {message}\n")
 
 log("initial")
 log("system", "loading foreground color ansi escape codes...")
@@ -108,14 +96,14 @@ sprite_color_codes = {"k" : black.fg,
 
 log("system", "starting sprite module...")
 class sprite:
-    def __init__(self, name, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "sub_pixel"] = "single", color_data: list[str] = None, fg_color: str = intense_cyan.fg):
+    def __init__(self, name, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel"] = "single", color_data: list[str] = None, fg_color: str = intense_cyan.fg):
         self.width = width
         self.height = height
         self.color_mode = color_mode
         self.fg = fg_color
         self.valid_data = True
-        if color_data != list:
-            log("error", f"invalid color data! sprite:{name}, color_data.type:{type(color_data)}")
+        if type(color_data) != list:
+            log("warning", f"empty color data! color data will be initialized.\n    extra data:\n    sprite_name:{name}\n    color_data_type:{type(color_data)}")
             if color_mode == "pixel":
                 color_data = []
                 for px in range(len(sprite_data)):
@@ -125,9 +113,9 @@ class sprite:
         self.readable_data = (sprite_data, color_data)
         if (len(sprite_data) != len(color_data)) or (len(sprite_data) != self.width * self.height):
             self.valid_data = False
-            log("error", f"invalid sprite data! sprite:{name}, intended_data.size:{width*height}, sprite_data.size:{len(sprite_data)}, color_data.size:{len(color_data)}")
+            log("error", f"invalid sprite data!\n    sprite info:\n    sprite_name:{name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
     
-    def data(self):
+    def load_raw(self):
         if self.valid_data == False:
             return
         pixel_data = self.readable_data[0]                                                 
@@ -157,7 +145,7 @@ class sprite:
                         color_raw_data.append("")
         return (pixel_raw_data, color_raw_data)   
 
-
+log("system", "starting screen module...")
 class screen:
     def __init__(self, height: int, width: int):
         self.height = height
@@ -187,17 +175,18 @@ class screen:
                     self.color_layers[y][x][layer] = f"{fg}"
             x += 1
 
-    def create_sprite(self, x: int, y: int, layer: int, sprite: sprite):
-        sprite_data = sprite.data()
-        if sprite_data == None:
+    def create_sprite(self, x: int, y: int, layer: int, sprite_data_raw: list, sprite_num: int = 0, sprite: sprite = None):
+        sprite_data = sprite_data_raw
+        offset = (sprite.height * sprite.width) * sprite_num
+        if sprite_data == None or sprite == None:
             return
         pixel_write_data, color_write_data = sprite_data
         for row in range(sprite.height):
             for column in range(sprite.width):
-                if layer != 0:
-                    if pixel_write_data[(row * sprite.width) + column] != "nop":
-                        self.pixel_layers[y + row][x + column][layer] = pixel_write_data[(row * sprite.width) + column]
-                        self.color_layers[y + row][x + column][layer] = color_write_data[(row * sprite.width) + column]
+                if (layer != 0) and ((0 <= x + column < self.width) and (0 <= y + row < self.height)):
+                    if pixel_write_data[offset + (row * sprite.width) + column] != "nop":
+                        self.pixel_layers[y + row][x + column][layer] = pixel_write_data[offset + (row * sprite.width) + column]
+                        self.color_layers[y + row][x + column][layer] = color_write_data[offset + (row * sprite.width) + column]
                     else:
                         self.pixel_layers[y + row][x + column][layer] = "   "
                         self.color_layers[y + row][x + column][layer] = ""
@@ -213,6 +202,7 @@ class screen:
                 self.color_layers[y][x][layer] = f"{fg}"
 
     def initialize(self, layers: int, bg_color: str):
+        log("system", "initializing screen...")
         self.layers = layers
         self.bg_color = bg_color
         worklist = []
@@ -295,18 +285,58 @@ class screen:
         sys.stdout.write(screen_print)
         sys.stdout.flush()
 
+log("system", "starting arcade module...")
+
+default_keymap = {"up"      : pynput.keyboard.Key.up, 
+                  "down"        : pynput.keyboard.Key.down,
+                  "left"        : pynput.keyboard.Key.left,
+                  "right"       : pynput.keyboard.Key.right,
+                  "space"       : pynput.keyboard.Key.space,
+                  "esc"         : pynput.keyboard.Key.esc,
+                  "enter"       : pynput.keyboard.Key.enter,
+                  "backspace"   : pynput.keyboard.Key.backspace}
+
 class arcade:
-    def __init__(self, arcade_name: str, screen: screen, type: str):
+    def __init__(self, arcade_name: str, screen: screen, type: Literal["main", "secondary"], key_map: dict = default_keymap):
         self.arcade_name = arcade_name
         self.screen = screen
         self.type = type
+        self.input = ""
+        self.key_map = key_map
 
     def start_machine(self, mainloop_code: callable):
-        if self.type == "main":
-            print(f"starting main machine {self.arcade_name}...")
-        elif self.type == "secondary":
-            print(f"starting secondary machine {self.arcade_name}...")
-        print("entering mainloop...")
+        log("info", f"starting arcade machine {self.arcade_name}...\n    arcade info:\n    name: {self.arcade_name}\n    type: {self.type}")
+        log("arcade", "entering code mainloop...")
         sys.stdout.write("\033[2J\033[H")
         sys.stdout.flush()
         mainloop_code()
+    
+    def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
+        self.input = ""
+        def input_logger(keypressed, keys = keys):
+            last_input = None
+            for key in keys:
+                if self.key_map[key] == keypressed:
+                    self.input = key
+                    last_input = key
+            if last_input == None:
+                self.input == "none"
+        listener = pynput.keyboard.Listener(on_press = input_logger)
+        listener.start()
+        log("arcade", f"arcade {self.arcade_name} started input logger")
+                
+#Tetris
+tetris_screen = screen(32, 32)
+tetris = arcade("pyrcade_tetris", tetris_screen, "secondary")
+
+#tetramino pieces sprites
+sprites_data = ["███", "███", 
+                "███", "███"]
+colors_data = ["Y", "Y", 
+               "Y", "Y"]
+tetramino1 = sprite("tetramino1", 2, 2, sprites_data, "pixel", colors_data)
+
+def tetris_loop():
+    while True:
+        pass
+tetris.start_machine(tetris_loop)
