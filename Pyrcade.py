@@ -247,7 +247,7 @@ class screen:
                 layered_color = self.color_layers[height_line][width_line]
                 foreground = False
                 for pixel_data in layered_pixel:
-                    if pixel_data != "   ":
+                    if pixel_data != "nop":
                         pixel = pixel_data
                 pixel_bake.append(pixel)
                 last_color = ""
@@ -276,13 +276,12 @@ class screen:
         self.screen = final_bake
     
     def print_screen(self):
-        sys.stdout.write("\033[H")
         screen_print = ""
         for height_line in self.screen:
             for width_line in height_line:
                 screen_print += width_line
-            screen_print += "\n"
-        sys.stdout.write(screen_print)
+            screen_print += "\n\033[0m"
+        sys.stdout.write("\033[2J\033[H\n" + screen_print)
         sys.stdout.flush()
 
 log("system", "starting arcade module...")
@@ -305,13 +304,13 @@ class arcade:
         self.key_map = key_map
 
     def start_machine(self, mainloop_code: callable):
-        log("info", f"starting arcade machine {self.arcade_name}...\n    arcade info:\n    name: {self.arcade_name}\n    type: {self.type}")
-        log("arcade", "entering code mainloop...")
+        log("arcade", f"starting arcade machine {self.arcade_name}...\n    arcade info:\n    name: {self.arcade_name}\n    type: {self.type}")
         sys.stdout.write("\033[2J\033[H")
         sys.stdout.flush()
         mainloop_code()
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
+        log("arcade", f"arcade {self.arcade_name} started input logger")
         self.input = ""
         def input_logger(keypressed, keys = keys):
             last_input = None
@@ -323,10 +322,9 @@ class arcade:
                 self.input == "none"
         listener = pynput.keyboard.Listener(on_press = input_logger)
         listener.start()
-        log("arcade", f"arcade {self.arcade_name} started input logger")
                 
 #Tetris
-tetris_screen = screen(32, 32)
+tetris_screen = screen(20, 20)
 tetris = arcade("pyrcade_tetris", tetris_screen, "secondary")
 
 #tetramino pieces sprites
@@ -336,7 +334,23 @@ colors_data = ["Y", "Y",
                "Y", "Y"]
 tetramino1 = sprite("tetramino1", 2, 2, sprites_data, "pixel", colors_data)
 
+sprites_data = ["███", "███", "nop",
+                "███", "nop", "nop",
+                "███", "nop", "nop",
+                
+                "nop", "nop", "nop",
+                "███", "nop", "nop",
+                "███", "███", "███",
+                
+                "nop", ]
+
 def tetris_loop():
+    tetris_screen.initialize(3, intense_cyan.bg)
     while True:
-        pass
+        tetris_screen.memory_reset()
+
+        tetris_screen.bake_screen()
+        tetris_screen.print_screen()
+        time.sleep(1)
+tetris.start_input()
 tetris.start_machine(tetris_loop)
