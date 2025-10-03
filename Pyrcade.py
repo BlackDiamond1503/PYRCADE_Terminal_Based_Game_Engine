@@ -7,12 +7,12 @@ def log(type: Literal["initial", "system", "warning", "info", "error", "arcade"]
     global initial_datetime
     date_and_time = datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")
     if type == "initial":
-        with open(f"logs/{date_and_time} - pynput_log.txt", "w") as log_file:
+        with open(f"logs/{date_and_time} - pyrcade_log.txt", "w", encoding="utf-8") as log_file:
             log_file.write(f"{date_and_time} - pyrcade engine starting...\n")
             log_file.write(f"{date_and_time} - starting logging system...\n")
             initial_datetime = date_and_time
     else:
-        with open(f"logs/{initial_datetime} - pynput_log.txt", "a") as log_file:
+        with open(f"logs/{initial_datetime} - pyrcade_log.txt", "a", encoding="utf-8") as log_file:
             log_file.write(f"{date_and_time} - {type} - {message}\n")
 
 log("initial")
@@ -52,7 +52,6 @@ bgcolor = {"black"          : "\u001b[48;5;0m",
            "intense_cyan"   : "\u001b[48;5;14m",
            "intense_white"  : "\u001b[48;5;15m"}
 
-log("system", "starting color module...")
 class color: 
     def __init__(self, colorkey: str):
         self.fg = fgcolor[colorkey]
@@ -76,7 +75,6 @@ intense_cyan = color("intense_cyan")
 white = color("white")
 intense_white = color("intense_white")
 
-log("system", "starting color codes translator dictionary...")
 sprite_color_codes = {"k" : black.fg, 
                       "K" : intense_black.fg, 
                       "r" : red.fg,
@@ -94,27 +92,42 @@ sprite_color_codes = {"k" : black.fg,
                       "w" : white.fg,
                       "W" : intense_white.fg}
 
-log("system", "starting sprite module...")
 class sprite:
-    def __init__(self, name, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel"] = "single", color_data: list[str] = None, fg_color: str = intense_cyan.fg):
+    def __init__(self, name, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1):
         self.width = width
         self.height = height
         self.color_mode = color_mode
-        self.fg = fg_color
         self.valid_data = True
-        if type(color_data) != list:
+        self.name = name
+        self.sprite_mode = sprite_mode
+        self.sprite_cuantity = sprite_cuantity
+        if type(color_data) != list and color_mode == "pixel":
             log("warning", f"empty color data! color data will be initialized.\n    extra data:\n    sprite_name:{name}\n    color_data_type:{type(color_data)}")
-            if color_mode == "pixel":
-                color_data = []
-                for px in range(len(sprite_data)):
-                    color_data.append(" ")
-            elif color_mode == "single":
-                color_data = " "
-        self.readable_data = (sprite_data, color_data)
-        if (len(sprite_data) != len(color_data)) or (len(sprite_data) != self.width * self.height):
+            color_data = []
+            for px in range(len(sprite_data)):
+                color_data.append(" ")
+        elif type(color_data) != str and color_mode == "single":
+            log("warning", f"empty color data! color data will be initialized.\n    extra data:\n    sprite_name:{name}\n    color_data_type:{type(color_data)}")
+            color_data = " "
+        elif  (len(sprite_data) != self.width * self.height) and self.sprite_mode == "single":
             self.valid_data = False
-            log("error", f"invalid sprite data!\n    sprite info:\n    sprite_name:{name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
-    
+            log("error", f"invalid sprite data!\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+        elif (len(sprite_data) != self.width * self.height * self.sprite_cuantity) and self.sprite_mode == "multi":
+            self.valid_data = False
+            log("error", f"invalid sprite data!\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height*self.sprite_cuantity}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+        elif len(sprite_data) != len(color_data) and color_mode == "pixel":
+            self.valid_data = False
+            log("error", f"invalid sprite data!\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+        self.readable_data = (sprite_data, color_data)
+        if self.color_mode == "pixel":
+            for idx, entry in enumerate(color_data):
+                if sprite_color_codes.get(entry, "") == "":
+                    log("error", f"invalid color code!\n    extra data:\n    sprite_name:{self.name}\n    color_mode: {self.color_mode}\n    invalid_entry:{entry}\n    invalid_index:{idx}")
+                    break
+        elif self.color_mode == "single":
+            if sprite_color_codes.get(color_data, "") == "":
+                log("error", f"invalid color code!\n    extra data:\n    sprite_name:{self.name}\n    color_mode: {self.color_mode}\n    color_data:{color_data}")
+
     def load_raw(self):
         if self.valid_data == False:
             return
@@ -139,13 +152,13 @@ class sprite:
                 elif self.color_mode == "single":
                     if pixel_data[index] != "nop":
                         pixel_raw_data.append(pixel_data[index])
-                        color_raw_data.append(color_data)
+                        color_raw_data.append(sprite_color_codes.get(color_data, ""))
                     else:
                         pixel_raw_data.append("nop")
                         color_raw_data.append("")
+        #log("info", f"sprite_raw_data dump\n    sprite_name: {self.name}\n    pixel_raw_data: {pixel_raw_data}\n    color_raw_data: {color_raw_data}\n ")
         return (pixel_raw_data, color_raw_data)   
 
-log("system", "starting screen module...")
 class screen:
     def __init__(self, height: int, width: int):
         self.height = height
@@ -175,7 +188,7 @@ class screen:
                     self.color_layers[y][x][layer] = f"{fg}"
             x += 1
 
-    def create_sprite(self, x: int, y: int, layer: int, sprite_data_raw: list, sprite_num: int = 0, sprite: sprite = None):
+    def create_sprite(self, x: int, y: int, layer: int, sprite_data_raw: tuple, sprite_num: int = 0, sprite: sprite = None):
         sprite_data = sprite_data_raw
         offset = (sprite.height * sprite.width) * sprite_num
         if sprite_data == None or sprite == None:
@@ -211,10 +224,7 @@ class screen:
             for width_line in range(self.width):
                 worklist[height_line].append([])
                 for layer in range(self.layers):
-                    if layer == 0:
-                        worklist[height_line][width_line].append("nop")
-                    else:
-                        worklist[height_line][width_line].append("   ")
+                    worklist[height_line][width_line].append("nop")
         self.pixel_blank = worklist 
         worklist = []
         for height_line in range(self.height):
@@ -245,34 +255,19 @@ class screen:
                 color = self.color_layers[height_line][width_line][0]
                 layered_pixel = self.pixel_layers[height_line][width_line]
                 layered_color = self.color_layers[height_line][width_line]
-                foreground = False
-                for pixel_data in layered_pixel:
-                    if pixel_data != "nop":
-                        pixel = pixel_data
+                found = False
+                for layer in range(len(layered_pixel)):
+                    if layered_pixel[layer] != "nop" and layered_color[layer] != "nop":
+                        pixel = layered_pixel[layer]
+                        color = layered_color[layer]
+                        found = True
+                if found == False:
+                    pixel = "   "
+                    color = layered_color[0]
                 pixel_bake.append(pixel)
-                last_color = ""
-                foreground = False
-                for color_data in layered_color:
-                    if color_data != "":
-                        if color_data.startswith("\u001b[38") and foreground == False:
-                            color = color_data
-                            foreground = True
-
-                            last_color = color_data
-                        elif color_data.startswith("\u001b[38") and foreground == True:
-                            bg_remap = "\u001b[48" + last_color[4:]
-                            color = bg_remap + color_data
-                            last_color = color_data
-                            foreground = True
-                        elif color_data.startswith("\u001b[48"):
-                            color += color_data
-                        else:
-                            color = ""
                 color_bake.append(color)
-                last_color = ""
-                foreground = False
             for item in range(len(pixel_bake)):
-                final_bake[height_line].append(color_bake[item] + pixel_bake[item])
+                final_bake[height_line].append(color_bake[item] + pixel_bake[item] + "\033[0m")
         self.screen = final_bake
     
     def print_screen(self):
@@ -284,9 +279,7 @@ class screen:
         sys.stdout.write("\033[2J\033[H\n" + screen_print)
         sys.stdout.flush()
 
-log("system", "starting arcade module...")
-
-default_keymap = {"up"      : pynput.keyboard.Key.up, 
+default_keymap = {"up"          : pynput.keyboard.Key.up, 
                   "down"        : pynput.keyboard.Key.down,
                   "left"        : pynput.keyboard.Key.left,
                   "right"       : pynput.keyboard.Key.right,
@@ -312,9 +305,10 @@ class arcade:
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
         log("arcade", f"arcade {self.arcade_name} started input logger")
         self.input = ""
-        def input_logger(keypressed, keys = keys):
+        self.keys = keys
+        def input_logger(keypressed):
             last_input = None
-            for key in keys:
+            for key in self.keys:
                 if self.key_map[key] == keypressed:
                     self.input = key
                     last_input = key
@@ -326,31 +320,42 @@ class arcade:
 #Tetris
 tetris_screen = screen(20, 20)
 tetris = arcade("pyrcade_tetris", tetris_screen, "secondary")
-
-#tetramino pieces sprites
-sprites_data = ["███", "███", 
-                "███", "███"]
-colors_data = ["Y", "Y", 
-               "Y", "Y"]
-tetramino1 = sprite("tetramino1", 2, 2, sprites_data, "pixel", colors_data)
-
-sprites_data = ["███", "███", "nop",
-                "███", "nop", "nop",
-                "███", "nop", "nop",
-                
-                "nop", "nop", "nop",
-                "███", "nop", "nop",
-                "███", "███", "███",
-                
-                "nop", ]
-
 def tetris_loop():
-    tetris_screen.initialize(3, intense_cyan.bg)
+    #tetris pieces sprites
+    sprites_data = ["███", "███", 
+                    "███", "███"]
+    colors_data = "y"
+    tetromino1_1 = sprite("tetromino1", 2, 2, sprites_data, "single", colors_data, intense_yellow.fg)
+    piece = False
+    pieces = [tetromino1_1]
+    tetris_screen.initialize(5, intense_cyan.bg)
+    bgpieces= []
+    #game loop
     while True:
         tetris_screen.memory_reset()
-
+        if tetris.input == "left":
+            if x > 5:
+                x -= 1
+                tetris.input = ""
+        elif tetris.input == "right":
+            if x < 15 - random_piece.width:
+                x += 1
+                tetris.input = ""
+        if piece == False:
+            piece = True
+            random_piece = random.choice(pieces)
+            x = 10
+            y = 0
+        if piece == True:
+            tetris_screen.create_sprite(x, y, 1, random_piece.load_raw(), 0, random_piece)
+            y += 1
+            if y > tetris_screen.height - random_piece.height:
+                piece = False
+                bgpieces.append((x, y, random_piece))
+        for bg in bgpieces:
+            tetris_screen.create_sprite(bg[0], bg[1]-1, 1, bg[2].load_raw(), 0, bg[2])
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
-        time.sleep(1)
+        time.sleep(0.2)
 tetris.start_input()
 tetris.start_machine(tetris_loop)
