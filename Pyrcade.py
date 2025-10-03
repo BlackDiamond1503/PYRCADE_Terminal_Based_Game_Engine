@@ -180,7 +180,9 @@ class screen:
                 workvar = ""
         for pixel in text_pixel_data:
             if layer != 0:
-                if bg != "":
+                if (0 <= x < self.width) and (0 <= y < self.height):
+                    continue
+                elif bg != "":
                     self.pixel_layers[y][x][layer] = f"{pixel}"
                     self.color_layers[y][x][layer] = f"{bg}{fg}"
                 else:
@@ -205,6 +207,8 @@ class screen:
                         self.color_layers[y + row][x + column][layer] = ""
 
     def create_pixel(self, x: int, y: int, layer: int, pixel_data: Tuple[str, str, str]):
+        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+            return
         px, fg, bg = pixel_data
         if layer != 0:
             if bg != "":
@@ -334,11 +338,11 @@ def tetris_loop():
     while True:
         tetris_screen.memory_reset()
         if tetris.input == "left":
-            if x > 5:
+            if (x > 5) and not (tetris.screen.pixel_layers[y][x - 1][1] == "███" or tetris.screen.pixel_layers[y + 1][x - 1][1] == "███"):
                 x -= 1
                 tetris.input = ""
         elif tetris.input == "right":
-            if x < 15 - random_piece.width:
+            if (x < 15 - random_piece.width) and not (tetris.screen.pixel_layers[y][x + random_piece.width][1] == "███" or tetris.screen.pixel_layers[y + 1][x + random_piece.width][1] == "███"):
                 x += 1
                 tetris.input = ""
         if piece == False:
@@ -346,14 +350,19 @@ def tetris_loop():
             random_piece = random.choice(pieces)
             x = 10
             y = 0
-        if piece == True:
-            tetris_screen.create_sprite(x, y, 1, random_piece.load_raw(), 0, random_piece)
-            y += 1
-            if y > tetris_screen.height - random_piece.height:
-                piece = False
-                bgpieces.append((x, y, random_piece))
         for bg in bgpieces:
             tetris_screen.create_sprite(bg[0], bg[1]-1, 1, bg[2].load_raw(), 0, bg[2])
+        piece_found = False
+        if piece == True:
+            tetris_screen.create_sprite(x, y, 2, random_piece.load_raw(), 0, random_piece)
+            for px in range(random_piece.width):
+                tetris_screen.create_pixel(x + px, y + random_piece.height, 3, ("███", "", intense_red.fg)) #debug draw
+                if ((y + random_piece.height) >= tetris_screen.height) or (tetris_screen.pixel_layers[y + random_piece.height][x + px][1] == "███") or (y > tetris_screen.height - random_piece.height):
+                    piece_found = True
+                    piece = False
+                    bgpieces.append((x, y + 1, random_piece))
+            if piece_found == False:
+                y += 1
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
         time.sleep(0.2)
