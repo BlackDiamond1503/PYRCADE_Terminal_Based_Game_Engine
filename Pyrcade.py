@@ -2,18 +2,20 @@ import time, sys, pynput, random, datetime
 from typing import Literal, Tuple
 from copy import deepcopy
 
+DEBUG = False
 initial_datetime = ""
 def log(type: Literal["initial", "system", "warning", "info", "error", "arcade"], message = None):
-    global initial_datetime
-    date_and_time = datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")
-    if type == "initial":
-        with open(f"logs/{date_and_time} - pyrcade_log.txt", "w", encoding="utf-8") as log_file:
-            log_file.write(f"{date_and_time} - pyrcade engine starting...\n")
-            log_file.write(f"{date_and_time} - starting logging system...\n")
-            initial_datetime = date_and_time
-    else:
-        with open(f"logs/{initial_datetime} - pyrcade_log.txt", "a", encoding="utf-8") as log_file:
-            log_file.write(f"{date_and_time} - {type} - {message}\n")
+    if DEBUG == True:
+        global initial_datetime
+        date_and_time = datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")
+        if type == "initial":
+            with open(f"logs/{date_and_time} - pyrcade_log.txt", "w", encoding="utf-8") as log_file:
+                log_file.write(f"{date_and_time} - pyrcade engine starting...\n")
+                log_file.write(f"{date_and_time} - starting logging system...\n")
+                initial_datetime = date_and_time
+        else:
+            with open(f"logs/{initial_datetime} - pyrcade_log.txt", "a", encoding="utf-8") as log_file:
+                log_file.write(f"{date_and_time} - {type} - {message}\n")
 
 log("initial")
 log("system", "loading foreground color ansi escape codes...")
