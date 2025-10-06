@@ -9,4 +9,4 @@ The .old.py engine is the prototype engine, not very good and I'm not very proud
 The Prototype engine, works with global variables and functions, is effective but hard to work in if implementing a new game. The mainloops are messy and confusing, the sprite implementation is hard to work with, the input is handled per game, not globally, and more problems
 
 #### *Pyrcade.py*
-The new class based engine, the class based tag is becouse I've never coded with classes (very easy to do, and I've never done it 'till now). Cleaner, easier to work in, more understandable, easier to debug in, there are just many advantages comparing it to the old one. 
+The new class based engine, the class based tag is because I've never coded with classes (very easy to do, and I've never done it 'till now). Cleaner, easier to work in, more understandable, easier to debug in, there are just many advantages comparing it to the old one. 
