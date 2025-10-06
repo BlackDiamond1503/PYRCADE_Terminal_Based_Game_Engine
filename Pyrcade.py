@@ -2,7 +2,7 @@ import time, sys, pynput, random, datetime
 from typing import Literal, Tuple
 from copy import deepcopy
 
-DEBUG = False
+DEBUG = True
 initial_datetime = ""
 def log(type: Literal["initial", "system", "warning", "info", "error", "arcade"], message = None):
     if DEBUG == True:
@@ -336,8 +336,15 @@ def tetris_loop():
     pieces = [tetromino1_1]
     tetris_screen.initialize(5, intense_cyan.bg)
     bgpieces= []
+    piece
+    game_field = []
     #game loop
+    def check_pieces(y, row):
+        screen_line = game_field[y + row]
+        if screen_line == (["███"] * 10):
+            return True
     while True:
+        gravity = 1
         tetris_screen.memory_reset()
         if tetris.input == "left":
             if (x > 5) and not (tetris.screen.pixel_layers[y][x - 1][1] == "███" or tetris.screen.pixel_layers[y + 1][x - 1][1] == "███"):
@@ -347,6 +354,9 @@ def tetris_loop():
             if (x < 15 - random_piece.width) and not (tetris.screen.pixel_layers[y][x + random_piece.width][1] == "███" or tetris.screen.pixel_layers[y + 1][x + random_piece.width][1] == "███"):
                 x += 1
                 tetris.input = ""
+        elif tetris.input == "down":
+            gravity = 3
+            tetris.input = ""
         if piece == False:
             piece = True
             random_piece = random.choice(pieces)
@@ -356,15 +366,29 @@ def tetris_loop():
             tetris_screen.create_sprite(bg[0], bg[1]-1, 1, bg[2].load_raw(), 0, bg[2])
         piece_found = False
         if piece == True:
+            for i in range(gravity):
+                for px in range(random_piece.width):
+                    tetris_screen.create_pixel(x + px, y + random_piece.height + 1, 3, ("███", "", intense_red.fg)) #debug draw
+                    if ((y + random_piece.height) >= tetris_screen.height) or (tetris_screen.pixel_layers[y + random_piece.height][x + px][1] == "███") or (y > tetris_screen.height - random_piece.height):
+                        piece_found = True
+                        piece = False
+                        bgpieces.append((x, y + 1, random_piece))
+                if piece_found == False:
+                    y += 1
             tetris_screen.create_sprite(x, y, 2, random_piece.load_raw(), 0, random_piece)
-            for px in range(random_piece.width):
-                tetris_screen.create_pixel(x + px, y + random_piece.height, 3, ("███", "", intense_red.fg)) #debug draw
-                if ((y + random_piece.height) >= tetris_screen.height) or (tetris_screen.pixel_layers[y + random_piece.height][x + px][1] == "███") or (y > tetris_screen.height - random_piece.height):
-                    piece_found = True
-                    piece = False
-                    bgpieces.append((x, y + 1, random_piece))
-            if piece_found == False:
-                y += 1
+        if piece_found == True:
+            for row in range(random_piece.height):
+                if check_pieces(y, row):
+                    for xp in range(tetris_screen.width):
+                        tetris_screen.pixel_layers[y + row][xp][1] = "nop"
+                        tetris_screen.color_layers[y + row][xp][1] = ""
+        for row_line in range(len(tetris_screen.pixel_layers)):
+            row_data = []
+            for width in range(tetris_screen.width):
+                if width > 4 and width < 15:
+                    row_data.append(tetris_screen.pixel_layers[row_line][width][1])
+            game_field.append(row_data)
+        log("arcade", f"game_field dump:\n{game_field}")
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
         time.sleep(0.2)
