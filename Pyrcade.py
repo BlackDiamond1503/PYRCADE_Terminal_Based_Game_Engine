@@ -323,29 +323,39 @@ class arcade:
         listener = pynput.keyboard.Listener(on_press = input_logger)
         listener.start()
                 
-#Tetris
+# tetris
 tetris_screen = screen(20, 20)
 tetris = arcade("pyrcade_tetris", tetris_screen, "secondary")
 def tetris_loop():
-    #tetris pieces sprites
+    #t etris pieces sprites
     sprites_data = ["███", "███", 
                     "███", "███"]
     colors_data = "y"
     tetromino1_1 = sprite("tetromino1", 2, 2, sprites_data, "single", colors_data, intense_yellow.fg)
+    # tetris variables
     piece = False
     pieces = [tetromino1_1]
     tetris_screen.initialize(5, intense_cyan.bg)
-    bgpieces= []
-    piece
-    game_field = []
-    #game loop
-    def check_pieces(y, row):
-        screen_line = game_field[y + row]
-        if screen_line == (["███"] * 10):
-            return True
+    piece = False
+    layer_1_pixel = []
+    layer_1_color = []
+    draw_layer = 2
+    # debug on / off
+    tetris_debug = False
+    # game loop
     while True:
+        draw_layer = 2
         gravity = 1
         tetris_screen.memory_reset()
+
+        # layer 1 restore
+        if layer_1_pixel != []:
+            for row in range(len(layer_1_pixel)):
+                for column in range(len(layer_1_pixel[row])):
+                    if layer_1_pixel[row][column] != "nop":
+                        tetris_screen.pixel_layers[row][column][1] = layer_1_pixel[row][column]
+                        tetris_screen.color_layers[row][column][1] = layer_1_color[row][column]
+
         if tetris.input == "left":
             if (x > 5) and not (tetris.screen.pixel_layers[y][x - 1][1] == "███" or tetris.screen.pixel_layers[y + 1][x - 1][1] == "███"):
                 x -= 1
@@ -357,40 +367,61 @@ def tetris_loop():
         elif tetris.input == "down":
             gravity = 3
             tetris.input = ""
+
         if piece == False:
+            draw_layer = 2
             piece = True
             random_piece = random.choice(pieces)
-            x = 10
+            x = 9
             y = 0
-        for bg in bgpieces:
-            tetris_screen.create_sprite(bg[0], bg[1]-1, 1, bg[2].load_raw(), 0, bg[2])
-        piece_found = False
+
+        collision = False
         if piece == True:
             for i in range(gravity):
                 for px in range(random_piece.width):
-                    tetris_screen.create_pixel(x + px, y + random_piece.height + 1, 3, ("███", "", intense_red.fg)) #debug draw
+                    if tetris_debug == True:
+                        tetris_screen.create_pixel(x + px, y + random_piece.height + 1, 3, ("███", "", intense_red.fg)) # debug draw for collisión
                     if ((y + random_piece.height) >= tetris_screen.height) or (tetris_screen.pixel_layers[y + random_piece.height][x + px][1] == "███") or (y > tetris_screen.height - random_piece.height):
-                        piece_found = True
+                        collision = True
+                        draw_layer = 1
                         piece = False
-                        bgpieces.append((x, y + 1, random_piece))
-                if piece_found == False:
+                if collision == False:
                     y += 1
-            tetris_screen.create_sprite(x, y, 2, random_piece.load_raw(), 0, random_piece)
-        if piece_found == True:
-            for row in range(random_piece.height):
-                if check_pieces(y, row):
-                    for xp in range(tetris_screen.width):
-                        tetris_screen.pixel_layers[y + row][xp][1] = "nop"
-                        tetris_screen.color_layers[y + row][xp][1] = ""
-        for row_line in range(len(tetris_screen.pixel_layers)):
+            tetris_screen.create_sprite(x, y, draw_layer, random_piece.load_raw(), 0, random_piece) # falling piece render
+
+        clear_lines = []
+        for row_line in range(len(tetris_screen.pixel_layers)): # single row building
             row_data = []
             for width in range(tetris_screen.width):
                 if width > 4 and width < 15:
                     row_data.append(tetris_screen.pixel_layers[row_line][width][1])
-            game_field.append(row_data)
-        log("arcade", f"game_field dump:\n{game_field}")
+            if row_data == ["███"] * 10:
+                clear_lines.append(row_line)
+
+        clear_lines.sort(reverse = True)
+        pixel_line_blank = tetris_screen.pixel_blank[0]
+        color_line_blank = tetris_screen.color_blank[0]
+        for index in clear_lines:
+            tetris_screen.pixel_layers.pop(index)
+            tetris_screen.color_layers.pop(index)
+        for _ in range(len(clear_lines)):
+            tetris_screen.pixel_layers.insert(0, deepcopy(pixel_line_blank))
+            tetris_screen.color_layers.insert(0, deepcopy(color_line_blank))
+        
+        layer_1_pixel = []
+        layer_1_color = []
+        for row in range(len(tetris_screen.pixel_layers)):
+            layer_1_pixel.append([])
+            layer_1_color.append([])
+            for column in range(len(tetris_screen.pixel_layers[row])):
+                layer_1_pixel[row].append(tetris_screen.pixel_layers[row][column][1])
+                layer_1_color[row].append(tetris_screen.color_layers[row][column][1])
+
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
         time.sleep(0.2)
+
+        log("info", f"layer 1 dump:\n{layer_1_pixel}")
+
 tetris.start_input()
 tetris.start_machine(tetris_loop)
