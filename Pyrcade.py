@@ -32,7 +32,7 @@ class color_manager:
 log("system", "loading color manager...")
 color = color_manager()
 
-sprite_color_codes = {"k" : color.fg(0), 
+preset_color_codes = {"k" : color.fg(0), 
                       "K" : color.fg(8), 
                       "r" : color.fg(1),
                       "R" : color.fg(9),
@@ -85,7 +85,7 @@ class sprite:
         if  (len(sprite_data) != self.width * self.height) and self.sprite_mode == "single":
             self._valid_data = False
             log("error", f"invalid sprite data! - single frame sprite incorrect data size.\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
-        elif (len(sprite_data) %  self._sprite_cuantity != 0) and self.sprite_mode == "multi":
+        elif (len(sprite_data) != self.width * self.height * sprite_cuantity) and self.sprite_mode == "multi":
             self._valid_data = False
             log("error", f"invalid sprite data! - multi frame sprite incorrect data size.\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height*self._sprite_cuantity}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
         elif len(sprite_data) != len(color_data) and color_mode == "pixel":
@@ -95,16 +95,16 @@ class sprite:
         # data content validator
         if self._color_mode == "pixel":
             for idx in range(len(color_data)):
-                if sprite_color_codes.get(color_data[idx], "") == "":
+                if preset_color_codes.get(color_data[idx], "") == "":
                     log("error", f"invalid color code! - color code not found.\n    extra data:\n    sprite_name:{self.name}\n    color_mode: {self._color_mode}\n    invalid_entry:{color_data[idx]}\n    invalid_index:{idx}")
                     break
         elif self._color_mode == "single":
-            if sprite_color_codes.get(color_data, "") == "":
+            if preset_color_codes.get(color_data, "") == "":
                 log("error", f"invalid color code! - color code not found.\n    extra data:\n    sprite_name:{self.name}\n    color_mode: {self._color_mode}\n    color_data:{color_data}")
         
         self.readable_data = (sprite_data, color_data)
 
-    def load_raw(self, frame):
+    def load_raw(self, frame = 0):
         if self._valid_data == False:
             return
         pixel_data = self.readable_data[0]                                                 
@@ -122,14 +122,14 @@ class sprite:
                             color_raw_data.append("")
                         else:
                             pixel_raw_data.append(str(pixel_data[index]))
-                            color_raw_data.append(str(sprite_color_codes.get(color_data[index], "")))
+                            color_raw_data.append(str(preset_color_codes.get(color_data[index], "")))
                     else:
                         pixel_raw_data.append("nop")
                         color_raw_data.append("")
                 elif self._color_mode == "single":
                     if pixel_data[index] != "nop":
                         pixel_raw_data.append(pixel_data[index])
-                        color_raw_data.append(sprite_color_codes.get(color_data, ""))
+                        color_raw_data.append(preset_color_codes.get(color_data, ""))
                     else:
                         pixel_raw_data.append("nop")
                         color_raw_data.append("")
@@ -150,19 +150,46 @@ class memory_bank:
         '''
         self._type = type
         self._writable = not read_only
+        self._default = default_value
+        self._memory = []
         dimentions_str = dimentions.split(sep = "x")
         dimentions_int = []
         for val in dimentions_str:
             dimentions_int.append(int(val))
-        if len(dimentions_int) >= 1:
+        self._x = 0
+        self._y = 0
+        self._z = 0
+        self._valid_dimentions = True
+        if len(dimentions_int) >= 1 and dimentions_int[0] != 0:
             self._x = dimentions_int[0]
+        elif len(dimentions_int) >= 1 and dimentions_int[0] == 0:
+            log("error", f'invalid memory size! - memory "x" dimention cannot be 0\n    extra data:\n    memory_dimentions: {dimentions}\n    memory_type: {self._type}')
+            self._valid_dimentions = False
         if len(dimentions_int) >= 2:
             self._y = dimentions_int[1]
         if len(dimentions_int) >= 3:
             self._z = dimentions_int[2]
 
     def initialize(self):
-        pass
+        if self._valid_dimentions == False:
+            log("error", f'memory initialization failed! - invalid memory_size declared\n    extra data:\n    memory_dimentions: {str(self)}')
+            return
+        if self._type == "1d":
+            for row in range(self._x):
+                self._memory.append(self._default)
+        elif self._type == "2d":
+            for row in range(self._x):
+                self._memory.append([])
+                for column in range(self._y):
+                    self._memory[row].append(self._default)
+        elif self._type == "3d":
+            for row in range(self._x):
+                self._memory.append([])
+                for column in range(self._y):
+                    self._memory[row].append([])
+                    for layer in range(self._z):
+                        self._memory[row][column].append(self._default)
+        
 
 class screen:
     def __init__(self, height: int, width: int):
@@ -314,15 +341,15 @@ class arcade:
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
         log("arcade", f"arcade {self.arcade_name} started input logger")
         self.input = ""
+        self.actual_input = None
         self._keys = keys
         def input_logger(keypressed):
-            last_input = None
+            self.actual_input = keypressed
             for key in self._keys:
                 if self._key_map[key] == keypressed:
                     self.input = key
-                    last_input = key
-            if last_input == None:
-                self.input == "none"
+            if self.actual_input == None:
+                self.input = "none"
         listener = pynput.keyboard.Listener(on_press = input_logger)
         listener.start()
                 
@@ -378,14 +405,11 @@ def tetris_loop():
         if tetris.input == "left":
             if (x > 5) and not (tetris._screen.pixel_layers[y][x - 1][1] == "███" or tetris._screen.pixel_layers[y + 1][x - 1][1] == "███"):
                 x -= 1
-                tetris.input = ""
         elif tetris.input == "right":
             if (x < 15 - random_piece.width) and not (tetris._screen.pixel_layers[y][x + random_piece.width][1] == "███" or tetris._screen.pixel_layers[y + 1][x + random_piece.width][1] == "███"):
                 x += 1
-                tetris.input = ""
         elif tetris.input == "down":
             gravity = 3
-            tetris.input = ""
 
         if piece == False:
             draw_layer = 2
@@ -421,11 +445,11 @@ def tetris_loop():
         pixel_line_blank = tetris_screen.pixel_blank[0]
         color_line_blank = tetris_screen.color_blank[0]
         for index in clear_lines:
-            layer_1_pixel.pop(index)
-            layer_1_color.color_layers.pop(index)
+            tetris_screen.pixel_layers.pop(index)
+            tetris_screen.color_layers.pop(index)
         for _ in range(len(clear_lines)):
-            layer_1_pixel.insert(0, deepcopy(pixel_line_blank))
-            layer_1_color.color_layers.insert(0, deepcopy(color_line_blank))
+            tetris_screen.pixel_layers.insert(0, deepcopy(pixel_line_blank))
+            tetris_screen.color_layers.insert(0, deepcopy(color_line_blank))
         
         layer_1_pixel = []
         layer_1_color = []
@@ -438,6 +462,7 @@ def tetris_loop():
 
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
+        print(tetris.actual_input)
         time.sleep(0.2)
 
         log("info", f"layer 1 dump:\n{layer_1_pixel}")
