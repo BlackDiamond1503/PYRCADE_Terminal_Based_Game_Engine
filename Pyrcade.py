@@ -70,43 +70,51 @@ class sprite:
         self.name = name
         self.sprite_mode = sprite_mode
         self._sprite_cuantity = sprite_cuantity
+
+        # data type validator
         if type(color_data) != list and color_mode == "pixel":
-            log("warning", f"empty color data! color data will be initialized.\n    extra data:\n    sprite_name:{name}\n    color_data_type:{type(color_data)}")
+            log("warning", f"empty color data! - color data will be initialized.\n    extra data:\n    sprite_name:{name}\n    color_data_type:{type(color_data)}")
             color_data = []
             for px in range(len(sprite_data)):
                 color_data.append(" ")
         elif type(color_data) != str and color_mode == "single":
-            log("warning", f"empty color data! color data will be initialized.\n    extra data:\n    sprite_name:{name}\n    color_data_type:{type(color_data)}")
+            log("warning", f"empty color data! - color data will be initialized.\n    extra data:\n    sprite_name:{name}\n    color_data_type:{type(color_data)}")
             color_data = " "
-        elif  (len(sprite_data) != self.width * self.height) and self.sprite_mode == "single":
+
+        # data size validator
+        if  (len(sprite_data) != self.width * self.height) and self.sprite_mode == "single":
             self._valid_data = False
-            log("error", f"invalid sprite data!\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
-        elif (len(sprite_data) != self.width * self.height * self._sprite_cuantity) and self.sprite_mode == "multi":
+            log("error", f"invalid sprite data! - single frame sprite incorrect data size.\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+        elif (len(sprite_data) %  self._sprite_cuantity != 0) and self.sprite_mode == "multi":
             self._valid_data = False
-            log("error", f"invalid sprite data!\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height*self._sprite_cuantity}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+            log("error", f"invalid sprite data! - multi frame sprite incorrect data size.\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height*self._sprite_cuantity}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
         elif len(sprite_data) != len(color_data) and color_mode == "pixel":
             self._valid_data = False
-            log("error", f"invalid sprite data!\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
-        self.readable_data = (sprite_data, color_data)
+            log("error", f"invalid sprite data! - inconsistent color-pixel data size.\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+        
+        # data content validator
         if self._color_mode == "pixel":
-            for idx, entry in enumerate(color_data):
-                if sprite_color_codes.get(entry, "") == "":
-                    log("error", f"invalid color code!\n    extra data:\n    sprite_name:{self.name}\n    color_mode: {self._color_mode}\n    invalid_entry:{entry}\n    invalid_index:{idx}")
+            for idx in range(len(color_data)):
+                if sprite_color_codes.get(color_data[idx], "") == "":
+                    log("error", f"invalid color code! - color code not found.\n    extra data:\n    sprite_name:{self.name}\n    color_mode: {self._color_mode}\n    invalid_entry:{color_data[idx]}\n    invalid_index:{idx}")
                     break
         elif self._color_mode == "single":
             if sprite_color_codes.get(color_data, "") == "":
-                log("error", f"invalid color code!\n    extra data:\n    sprite_name:{self.name}\n    color_mode: {self._color_mode}\n    color_data:{color_data}")
+                log("error", f"invalid color code! - color code not found.\n    extra data:\n    sprite_name:{self.name}\n    color_mode: {self._color_mode}\n    color_data:{color_data}")
+        
+        self.readable_data = (sprite_data, color_data)
 
-    def load_raw(self):
+    def load_raw(self, frame):
         if self._valid_data == False:
             return
         pixel_data = self.readable_data[0]                                                 
         color_data = self.readable_data[1]                                                 
         pixel_raw_data = []
-        color_raw_data = []                                                    
+        color_raw_data = []
+        offset = self.height * self.width * frame                                                    
         for row in range(self.height):                                                                                                                                        
             for pixel in range(self.width):
-                index = (row * self.width) + pixel
+                index = (row * self.width) + pixel + offset
                 if self._color_mode == "pixel":
                     if pixel_data[index] != "nop":
                         if color_data[index] == " ":
