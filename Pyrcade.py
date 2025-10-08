@@ -18,81 +18,36 @@ def log(type: Literal["initial", "system", "warning", "info", "error", "arcade"]
                 log_file.write(f"{date_and_time} - {type} - {message}\n")
 
 log("initial")
-log("system", "loading foreground color ansi escape codes...")
-fgcolor = {"black"          : "\u001b[38;5;0m", 
-           "red"            : "\u001b[38;5;1m",
-           "green"          : "\u001b[38;5;2m",
-           "yellow"         : "\u001b[38;5;3m",
-           "blue"           : "\u001b[38;5;4m",
-           "purple"         : "\u001b[38;5;5m",
-           "cyan"           : "\u001b[38;5;6m",
-           "white"          : "\u001b[38;5;7m",
-           "intense_black"  : "\u001b[38;5;8m", 
-           "intense_red"    : "\u001b[38;5;9m",
-           "intense_green"  : "\u001b[38;5;10m",
-           "intense_yellow" : "\u001b[38;5;11m",
-           "intense_blue"   : "\u001b[38;5;12m",
-           "intense_purple" : "\u001b[38;5;13m",
-           "intense_cyan"   : "\u001b[38;5;14m",
-           "intense_white"  : "\u001b[38;5;15m"}
 
-log("system", "loading background color ansi escape codes...")
-bgcolor = {"black"          : "\u001b[48;5;0m", 
-           "red"            : "\u001b[48;5;1m", 
-           "green"          : "\u001b[48;5;2m",
-           "yellow"         : "\u001b[48;5;3m",
-           "blue"           : "\u001b[48;5;4m",
-           "purple"         : "\u001b[48;5;5m",
-           "cyan"           : "\u001b[48;5;6m",
-           "white"          : "\u001b[48;5;7m",
-           "intense_black"  : "\u001b[48;5;8m", 
-           "intense_red"    : "\u001b[48;5;9m",
-           "intense_green"  : "\u001b[48;5;10m",
-           "intense_yellow" : "\u001b[48;5;11m",
-           "intense_blue"   : "\u001b[48;5;12m",
-           "intense_purple" : "\u001b[48;5;13m",
-           "intense_cyan"   : "\u001b[48;5;14m",
-           "intense_white"  : "\u001b[48;5;15m"}
+class color_manager: 
+    def __init__(self):
+        pass
+    
+    def fg(self, code):
+        return f"\u001b[38;5;{code}m"
+    
+    def bg(self, code):
+        return f"\u001b[48;5;{code}m"
 
-class color: 
-    def __init__(self, colorkey: str):
-        self.fg = fgcolor[colorkey]
-        self.bg = bgcolor[colorkey]
+log("system", "loading color manager...")
+color = color_manager()
 
-log("system", "loading color pallette with color module...")
-black = color("black")  
-intense_black = color("intense_black")  
-red = color("red")
-intense_red = color("intense_red")
-green = color("green")
-intense_green = color("intense_green")
-yellow = color("yellow")
-intense_yellow = color("intense_yellow")
-blue = color("blue")
-intense_blue = color("intense_blue")
-purple = color("purple")
-intense_purple = color("intense_purple")
-cyan = color("cyan")
-intense_cyan = color("intense_cyan")
-white = color("white")
-intense_white = color("intense_white")
-
-sprite_color_codes = {"k" : black.fg, 
-                      "K" : intense_black.fg, 
-                      "r" : red.fg,
-                      "R" : intense_red.fg,
-                      "g" : green.fg,
-                      "G" : intense_green.fg,
-                      "y" : yellow.fg,
-                      "Y" : intense_yellow.fg,
-                      "b" : blue.fg,
-                      "B" : intense_blue.fg,
-                      "p" : purple.fg,
-                      "P" : intense_purple.fg,
-                      "c" : cyan.fg,
-                      "C" : intense_cyan.fg,
-                      "w" : white.fg,
-                      "W" : intense_white.fg}
+sprite_color_codes = {"k" : color.fg(0), 
+                      "K" : color.fg(8), 
+                      "r" : color.fg(1),
+                      "R" : color.fg(9),
+                      "g" : color.fg(2),
+                      "G" : color.fg(10),
+                      "y" : color.fg(3),
+                      "Y" : color.fg(11),
+                      "b" : color.fg(4),
+                      "B" : color.fg(12),
+                      "p" : color.fg(5),
+                      "P" : color.fg(13),
+                      "c" : color.fg(6),
+                      "C" : color.fg(14),
+                      "w" : color.fg(7),
+                      "W" : color.fg(15)}
 
 class sprite:
     def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1):
@@ -391,7 +346,7 @@ def tetris_loop():
     # tetris variables
     piece = False
     pieces = [tetromino1_1]
-    tetris_screen.initialize(5, intense_cyan.bg)
+    tetris_screen.initialize(5, color.bg(14))
     piece = False
     layer_1_pixel = []
     layer_1_color = []
@@ -436,7 +391,7 @@ def tetris_loop():
             for i in range(gravity):
                 for px in range(random_piece.width):
                     if tetris_debug == True:
-                        tetris_screen.create_pixel(x + px, y + random_piece.height + 1, 3, ("███", "", intense_red.fg)) # debug draw for collisión
+                        tetris_screen.create_pixel(x + px, y + random_piece.height + 1, 3, ("███", "", color.fg(9))) # debug draw for collisión
                     if ((y + random_piece.height) >= tetris_screen.height) or (tetris_screen.pixel_layers[y + random_piece.height][x + px][1] == "███") or (y > tetris_screen.height - random_piece.height):
                         collision = True
                         draw_layer = 1
