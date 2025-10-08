@@ -190,6 +190,9 @@ class memory_bank:
                     for layer in range(self._z):
                         self._memory[row][column].append(self._default)
         
+    def get(self, cord = None):
+        if cord == None:
+            log("error", f"could not retrive data!")
 
 class screen:
     def __init__(self, height: int, width: int):
