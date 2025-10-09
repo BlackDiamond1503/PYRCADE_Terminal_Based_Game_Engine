@@ -344,16 +344,21 @@ class arcade:
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
         log("arcade", f"arcade {self.arcade_name} started input logger")
         self.input = ""
-        self.actual_input = None
+        self._actual_inputs = set()
         self._keys = keys
-        def input_logger(keypressed):
-            self.actual_input = keypressed
+        self._input_events_buffer = []
+        def input_logger_press(keypressed):
             for key in self._keys:
                 if self._key_map[key] == keypressed:
+                    self._actual_inputs.add(key)
                     self.input = key
-            if self.actual_input == None:
-                self.input = "none"
-        listener = pynput.keyboard.Listener(on_press = input_logger)
+        def input_logger_release(keyrelease):
+            for key in self._keys:
+                if self._key_map[key] == keyrelease:
+                    self._actual_inputs.discard(key)
+                    if self.input == key:
+                        self.input = ""
+        listener = pynput.keyboard.Listener(on_press = input_logger_press, on_release = input_logger_release)
         listener.start()
                 
 # tetris
@@ -405,13 +410,13 @@ def tetris_loop():
                         tetris_screen.pixel_layers[row][column][1] = layer_1_pixel[row][column]
                         tetris_screen.color_layers[row][column][1] = layer_1_color[row][column]
 
-        if tetris.input == "left":
+        if "left" in tetris._actual_inputs:
             if (x > 5) and not (tetris._screen.pixel_layers[y][x - 1][1] == "███" or tetris._screen.pixel_layers[y + 1][x - 1][1] == "███"):
                 x -= 1
-        elif tetris.input == "right":
+        if "right" in tetris._actual_inputs:
             if (x < 15 - random_piece.width) and not (tetris._screen.pixel_layers[y][x + random_piece.width][1] == "███" or tetris._screen.pixel_layers[y + 1][x + random_piece.width][1] == "███"):
                 x += 1
-        elif tetris.input == "down":
+        if "down" in tetris._actual_inputs:
             gravity = 3
 
         if piece == False:
@@ -419,7 +424,7 @@ def tetris_loop():
             piece = True
             random_piece = random.choice(pieces)
             x = 9
-            y = 0
+            y = -2
 
         collision = False
         if piece == True:
@@ -465,7 +470,7 @@ def tetris_loop():
 
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
-        print(tetris.actual_input)
+        print(tetris._actual_inputs)
         time.sleep(0.2)
 
         log("info", f"layer 1 dump:\n{layer_1_pixel}")
