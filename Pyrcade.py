@@ -10,12 +10,12 @@ def log(type: Literal["initial", "system", "warning", "info", "error", "arcade"]
         date_and_time = datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")
         if type == "initial":
             with open(f"logs/{date_and_time} - pyrcade_log.txt", "w", encoding="utf-8") as log_file:
-                log_file.write(f"{date_and_time} - pyrcade engine starting...\n")
-                log_file.write(f"{date_and_time} - starting logging system...\n")
+                log_file.write(f"{date_and_time} - pyrcade engine starting...\n\n")
+                log_file.write(f"{date_and_time} - starting logging system...\n\n")
                 initial_datetime = date_and_time
         else:
             with open(f"logs/{initial_datetime} - pyrcade_log.txt", "a", encoding="utf-8") as log_file:
-                log_file.write(f"{date_and_time} - {type} - {message}\n")
+                log_file.write(f"{date_and_time} - {type} - {message}\n\n")
 
 log("initial")
 
@@ -135,14 +135,12 @@ class sprite:
                         color_raw_data.append("")
         #log("info", f"sprite_raw_data dump\n    sprite_name: {self.name}\n    pixel_raw_data: {pixel_raw_data}\n    color_raw_data: {color_raw_data}\n ")
         return (pixel_raw_data, color_raw_data)   
-
-dimention_vector = NewType("dimention_vector", str)
-
+    
 class memory_bank:
-    def __init__(self, type: Literal["1d", "2d", "3d"] = "1d", read_only: bool = False, dimentions: dimention_vector = "10", default_value: Literal[0, ""] = 0):
+    def __init__(self, type: Literal["1d", "2d", "3d"] = "1d", read_only: bool = False, dimentions: str = "10", default_value: Literal[0, ""] = 0):
         '''
-        :param dimentions:  Is the size of the memory bank on a string. The format is an XYZ type and is separated by an "x", X, Y and Z MUST be integers.The format would look like: "XxYxZ".
-        :type dimentions: dimention_vector
+        :param dimentions:  Is the size of the memory bank on a string. The format is an XYZ type and is separated by an "x". X, Y and Z MUST be integers. The format would look like: "XxYxZ".
+        :type dimentions: str - 3 int in a str separated by an "x"
         :param default_value:   The default state of the memory when initialized. Can be either 0 or ""
         :param type:    The dimention depth / complexity of the memory bank. 1d = [a, b], 2d = [[a1, b1], [a2, b2]], 3d = [[[a11, b11], [a12, b12]], [[a21, b21], [a22, b22]]]
         :type type: str
@@ -190,9 +188,25 @@ class memory_bank:
                     for layer in range(self._z):
                         self._memory[row][column].append(self._default)
         
-    def get(self, cord = None):
-        if cord == None:
-            log("error", f"could not retrive data!")
+    def get(self, memory_pointer: tuple = (0,)):
+        '''
+        :param memory_pointer: Cordinates of the data to retrieve. MUST be a tuple. If a one item tuple then (x,)
+        '''
+        if type(memory_pointer) != tuple:
+            log("error", f"could not retrive data! - invalid pointer\n    extra data:\n    pointer_type: {type(memory_pointer)}")
+            return 0
+        try:
+            if len(memory_pointer) == 1:
+                return self._memory[memory_pointer[0]]
+            if len(memory_pointer) == 2:
+                return self._memory[memory_pointer[0]][memory_pointer[1]]
+            if len(memory_pointer) == 3:
+                return self._memory[memory_pointer[0]][memory_pointer[1]][memory_pointer[2]]
+        except IndexError:
+            log("error", f"could not retrive data! - out of bounds memory pointer\n    extra data:\n    pointer: {memory_pointer}")
+            return 0
+        
+        
 
 class screen:
     def __init__(self, height: int, width: int):
@@ -343,7 +357,6 @@ class arcade:
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
         log("arcade", f"arcade {self.arcade_name} started input logger")
-        self.input = ""
         self._actual_inputs = set()
         self._keys = keys
         self._input_events_buffer = []
@@ -351,13 +364,10 @@ class arcade:
             for key in self._keys:
                 if self._key_map[key] == keypressed:
                     self._actual_inputs.add(key)
-                    self.input = key
         def input_logger_release(keyrelease):
             for key in self._keys:
                 if self._key_map[key] == keyrelease:
                     self._actual_inputs.discard(key)
-                    if self.input == key:
-                        self.input = ""
         listener = pynput.keyboard.Listener(on_press = input_logger_press, on_release = input_logger_release)
         listener.start()
                 
@@ -449,16 +459,6 @@ def tetris_loop():
             if row_data == ["███"] * 10:
                 clear_lines.append(row_line)
 
-        clear_lines.sort(reverse = True)
-        pixel_line_blank = tetris_screen.pixel_blank[0]
-        color_line_blank = tetris_screen.color_blank[0]
-        for index in clear_lines:
-            tetris_screen.pixel_layers.pop(index)
-            tetris_screen.color_layers.pop(index)
-        for _ in range(len(clear_lines)):
-            tetris_screen.pixel_layers.insert(0, deepcopy(pixel_line_blank))
-            tetris_screen.color_layers.insert(0, deepcopy(color_line_blank))
-        
         layer_1_pixel = []
         layer_1_color = []
         for row in range(len(tetris_screen.pixel_layers)):
@@ -467,6 +467,23 @@ def tetris_loop():
             for column in range(len(tetris_screen.pixel_layers[row])):
                 layer_1_pixel[row].append(tetris_screen.pixel_layers[row][column][1])
                 layer_1_color[row].append(tetris_screen.color_layers[row][column][1])
+
+        clear_lines.sort(reverse = True)
+        pixel_line_blank = tetris_screen.pixel_blank[0]
+        color_line_blank = tetris_screen.color_blank[0]
+        for index in clear_lines:
+            layer_1_pixel.pop(index)
+            layer_1_color.pop(index)
+        for _ in range(len(clear_lines)):
+            layer_1_pixel.insert(0, deepcopy(pixel_line_blank))
+            layer_1_color.insert(0, deepcopy(color_line_blank))
+        
+        if layer_1_pixel != []:
+            for row in range(len(layer_1_pixel)):
+                for column in range(len(layer_1_pixel[row])):
+                    if layer_1_pixel[row][column] != "nop":
+                        tetris_screen.pixel_layers[row][column][1] = layer_1_pixel[row][column]
+                        tetris_screen.color_layers[row][column][1] = layer_1_color[row][column]
 
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
