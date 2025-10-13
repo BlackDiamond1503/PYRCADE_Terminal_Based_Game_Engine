@@ -1,10 +1,10 @@
 import time, sys, pynput, random, datetime
-from typing import Literal, Tuple, NewType
+from typing import Literal, Tuple
 from copy import deepcopy
 
 DEBUG = True
 initial_datetime = ""
-def log(type: Literal["initial", "system", "warning", "info", "error", "arcade"], message = None):
+def log(type: Literal["initial", "system", "warning", "info", "error", "Arcade"], message = None):
     if DEBUG == True:
         global initial_datetime
         date_and_time = datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")
@@ -19,7 +19,7 @@ def log(type: Literal["initial", "system", "warning", "info", "error", "arcade"]
 
 log("initial")
 
-class color_manager: 
+class ColorManager: 
     def __init__(self):
         pass
     
@@ -30,7 +30,7 @@ class color_manager:
         return f"\u001b[48;5;{code}m"
 
 log("system", "loading color manager...")
-color = color_manager()
+color = ColorManager()
 
 preset_color_codes = {"k" : color.fg(0), 
                       "K" : color.fg(8), 
@@ -49,18 +49,18 @@ preset_color_codes = {"k" : color.fg(0),
                       "w" : color.fg(7),
                       "W" : color.fg(15)}
 
-class sprite:
+class Sprite:
     def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1):
         '''
-        :param sprite_data: Is a list with "pixel" data of the sprite. Every pixel MUST be 3 characters long
+        :param sprite_data: Is a list with "pixel" data of the Sprite. Every pixel MUST be 3 characters long
         :type sprite_data:  list[str, str, str, ...]
-        :param color_mode:  The color mode of the sprite. "single": all the sprite is the same color, "pixel": every pixel has it's own color
+        :param color_mode:  The color mode of the Sprite. "single": all the Sprite is the same color, "pixel": every pixel has it's own color
         :type color_mode:   str - "single", "pixel"
-        :param color_data:  Is a list with "color" data of the sprite. Every entry MUST be 1 characters long, the character MUST be part of the color_codes dictionary
+        :param color_data:  Is a list with "color" data of the Sprite. Every entry MUST be 1 characters long, the character MUST be part of the color_codes dictionary
         :type color_data:   list[str, str, str, ...]
-        :param sprite_mode: A flag that enables or disables the multi frame support for sprite animation or variation.
+        :param sprite_mode: A flag that enables or disables the multi frame support for Sprite animation or variation.
         :type sprite_mode:  str - "single", "multi"
-        :param sprite_cuantity: This tells the engine how many frames / different sprites the sprite data holds. MUST be 1 if the sprite_mode id "single"
+        :param sprite_cuantity: This tells the engine how many frames / different sprites the Sprite data holds. MUST be 1 if the sprite_mode id "single"
         :type sprite_cuantity: int
         '''
         self.width = width
@@ -84,13 +84,13 @@ class sprite:
         # data size validator
         if  (len(sprite_data) != self.width * self.height) and self.sprite_mode == "single":
             self._valid_data = False
-            log("error", f"invalid sprite data! - single frame sprite incorrect data size.\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+            log("error", f"invalid Sprite data! - single frame Sprite incorrect data size.\n    Sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
         elif (len(sprite_data) != self.width * self.height * sprite_cuantity) and self.sprite_mode == "multi":
             self._valid_data = False
-            log("error", f"invalid sprite data! - multi frame sprite incorrect data size.\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height*self._sprite_cuantity}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+            log("error", f"invalid Sprite data! - multi frame Sprite incorrect data size.\n    Sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height*self._sprite_cuantity}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
         elif len(sprite_data) != len(color_data) and color_mode == "pixel":
             self._valid_data = False
-            log("error", f"invalid sprite data! - inconsistent color-pixel data size.\n    sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
+            log("error", f"invalid Sprite data! - inconsistent color-pixel data size.\n    Sprite info:\n    sprite_name:{self.name}\n    intended_data_size:{width*height}\n    sprite_data_size:{len(sprite_data)}\n    color_data_size:{len(color_data)}")
         
         # data content validator
         if self._color_mode == "pixel":
@@ -136,7 +136,7 @@ class sprite:
         #log("info", f"sprite_raw_data dump\n    sprite_name: {self.name}\n    pixel_raw_data: {pixel_raw_data}\n    color_raw_data: {color_raw_data}\n ")
         return (pixel_raw_data, color_raw_data)   
     
-class memory_bank:
+class MemoryBank:
     def __init__(self, type: Literal["1d", "2d", "3d"] = "1d", read_only: bool = False, dimentions: str = "10", default_value: Literal[0, ""] = 0):
         '''
         :param dimentions:  Is the size of the memory bank on a string. The format is an XYZ type and is separated by an "x". X, Y and Z MUST be integers. The format would look like: "XxYxZ".
@@ -173,17 +173,17 @@ class memory_bank:
             log("error", f'memory initialization failed! - invalid memory_size declared\n    extra data:\n    memory_dimentions: {str(self)}')
             return
         if self._type == "1d":
-            for row in range(self._x):
+            for column in range(self._x):
                 self._memory.append(self._default)
         elif self._type == "2d":
-            for row in range(self._x):
+            for row in range(self._y):
                 self._memory.append([])
-                for column in range(self._y):
+                for column in range(self._x):
                     self._memory[row].append(self._default)
         elif self._type == "3d":
-            for row in range(self._x):
+            for row in range(self._y):
                 self._memory.append([])
-                for column in range(self._y):
+                for column in range(self._x):
                     self._memory[row].append([])
                     for layer in range(self._z):
                         self._memory[row][column].append(self._default)
@@ -205,10 +205,48 @@ class memory_bank:
         except IndexError:
             log("error", f"could not retrive data! - out of bounds memory pointer\n    extra data:\n    pointer: {memory_pointer}")
             return 0
+    
+    def set(self, memory_pointer: tuple = (0,), data: any = ""):
+        '''
+        :param memory_pointer: Cordinates of the data to write. MUST be a tuple. If a one item tuple then (x,)
+        '''
+        if type(memory_pointer) != tuple:
+            log("error", f"could not write data! - invalid pointer\n    extra data:\n    pointer_type: {type(memory_pointer)}")
+            return
+        try:
+            if len(memory_pointer) == 1:
+                self._memory[memory_pointer[0]] = data
+            if len(memory_pointer) == 2:
+                self._memory[memory_pointer[0]][memory_pointer[1]] = data
+            if len(memory_pointer) == 3:
+                self._memory[memory_pointer[0]][memory_pointer[1]][memory_pointer[2]] = data
+        except IndexError:
+            log("error", f"could not write data! - out of bounds memory pointer\n    extra data:\n    pointer: {memory_pointer}")
+            return
         
+    def write_bank(self, start_pointer: tuple = (0, 0, 0), information_bank: list = [[[""]]], bank_dimentions: tuple = (1, 1, 1)):
+        '''
+        :param start_pointer: Cordinates of the data to write. MUST be a tuple. If a one item tuple then (x,)
+        :param bank_dimentions: Size of the data bank. MUST be a tuple. The tuple should have the same cuantity of entries as dimentions on the memory bank, (1d = 1, 2d = 2, 3d = 3). Dimentions come in order: (X, Y, Z)
+        '''
+        x, y, z = bank_dimentions
+        sx, sy, sz = start_pointer
+        if len(bank_dimentions) == 1:
+            for row in range(y):
+                self._memory[row + sy] = information_bank[row]
+        elif len(bank_dimentions) == 2:
+            for row in range(y):
+                for column in range(x):
+                    self._memory[row + sy][column + sx] = information_bank[row][column]
+        elif len(bank_dimentions) == 3:
+            for row in range(y):
+                for column in range(x):
+                    for layer in range(z):
+                        self._memory[row + sy][column + sx][layer + sz] = information_bank[row][column][layer]
+
         
 
-class screen:
+class Screen:
     def __init__(self, height: int, width: int):
         self.height = height
         self.width = width
@@ -239,23 +277,26 @@ class screen:
                     self.color_layers[y][x][layer] = f"{fg}"
             x += 1
 
-    def create_sprite(self, x: int, y: int, layer: int, sprite_data_raw: tuple, sprite_num: int = 0, sprite: sprite = None):
+    def create_sprite(self, x: int, y: int, layer: int, sprite_data_raw: tuple, sprite_num: int = 0, Sprite: Sprite = None):
         sprite_data = sprite_data_raw
-        offset = (sprite.height * sprite.width) * sprite_num
-        if sprite_data == None or sprite == None:
+        offset = (Sprite.height * Sprite.width) * sprite_num
+        if sprite_data == None or Sprite == None:
             return
         pixel_write_data, color_write_data = sprite_data
-        for row in range(sprite.height):
-            for column in range(sprite.width):
+        for row in range(Sprite.height):
+            for column in range(Sprite.width):
                 if (layer != 0) and ((0 <= x + column < self.width) and (0 <= y + row < self.height)):
-                    if pixel_write_data[offset + (row * sprite.width) + column] != "nop":
-                        self.pixel_layers[y + row][x + column][layer] = pixel_write_data[offset + (row * sprite.width) + column]
-                        self.color_layers[y + row][x + column][layer] = color_write_data[offset + (row * sprite.width) + column]
+                    if pixel_write_data[offset + (row * Sprite.width) + column] != "nop":
+                        self.pixel_layers[y + row][x + column][layer] = pixel_write_data[offset + (row * Sprite.width) + column]
+                        self.color_layers[y + row][x + column][layer] = color_write_data[offset + (row * Sprite.width) + column]
                     else:
                         self.pixel_layers[y + row][x + column][layer] = "   "
                         self.color_layers[y + row][x + column][layer] = ""
 
     def create_pixel(self, x: int, y: int, layer: int, pixel_data: Tuple[str, str, str]):
+        '''
+        :param pixel_data: A tuple of 3 entries. 1st entry: Pixel - 2nd Entry: Foreground Color - 3rd Entry: Background Color
+        '''
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
             return
         px, fg, bg = pixel_data
@@ -266,9 +307,17 @@ class screen:
             else:
                 self.pixel_layers[y][x][layer] = f"{px}"
                 self.color_layers[y][x][layer] = f"{fg}"
+    
+    def set_bg(self, initx: int, inity: int, finx: int, finy: int, color: str):
+        sizex = finx - initx
+        sizey = finy - inity
+        for row in range(sizey):
+            for column in range(sizex):
+                if not(column + initx < 0 or column + initx >= self.width or row + inity < 0 or row + inity >= self.height):
+                    self.color_layers[row + inity][column + initx][0] = f"{color}"
 
     def initialize(self, layers: int, bg_color: str):
-        log("system", "initializing screen...")
+        log("system", "initializing Screen...")
         self._layers = layers
         self._bg_color = bg_color
         worklist = []
@@ -319,6 +368,7 @@ class screen:
                     color = layered_color[0]
                 pixel_bake.append(pixel)
                 color_bake.append(color)
+            #log("info", f"color bake dump: {color_bake}\n pixel bake dump: {pixel_bake}")
             for item in range(len(pixel_bake)):
                 final_bake[height_line].append(color_bake[item] + pixel_bake[item] + "\033[0m")
         self._screen = final_bake
@@ -341,22 +391,22 @@ default_keymap = {"up"          : pynput.keyboard.Key.up,
                   "enter"       : pynput.keyboard.Key.enter,
                   "backspace"   : pynput.keyboard.Key.backspace}
 
-class arcade:
-    def __init__(self, arcade_name: str, screen: screen, type: Literal["main", "secondary"], key_map: dict = default_keymap):
+class Arcade:
+    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["main", "secondary"], key_map: dict = default_keymap):
         self.arcade_name = arcade_name
-        self._screen = screen
+        self._screen = Screen
         self._type = type
         self.input = ""
         self._key_map = key_map
 
     def start_machine(self, mainloop_code: callable):
-        log("arcade", f"starting arcade machine {self.arcade_name}...\n    arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
+        log("Arcade", f"starting Arcade machine {self.arcade_name}...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
         sys.stdout.write("\033[2J\033[H")
         sys.stdout.flush()
         mainloop_code()
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
-        log("arcade", f"arcade {self.arcade_name} started input logger")
+        log("Arcade", f"Arcade {self.arcade_name} started input logger")
         self._actual_inputs = set()
         self._keys = keys
         self._input_events_buffer = []
@@ -372,14 +422,14 @@ class arcade:
         listener.start()
                 
 # tetris
-tetris_screen = screen(20, 20)
-tetris = arcade("pyrcade_tetris", tetris_screen, "secondary")
+tetris_screen = Screen(20, 20)
+tetris = Arcade("pyrcade_tetris", tetris_screen, "secondary")
 def tetris_loop():
     #t etris pieces sprites
     sprites_data = ["███", "███", 
                     "███", "███"]
     colors_data = "y"
-    tetromino1_1 = sprite("tetromino1", 2, 2, sprites_data, "single", colors_data, "single", 1)
+    tetromino1_1 = Sprite("tetromino1", 2, 2, sprites_data, "single", colors_data, "single", 1)
     sprites_data = ["nop", "nop", "nop",
                     "███", "nop", "nop", 
                     "███", "███", "███",
@@ -411,6 +461,7 @@ def tetris_loop():
         draw_layer = 2
         gravity = 1
         tetris_screen.memory_reset()
+        tetris_screen.set_bg(5, 0, 15, 20, color.bg(6))
 
         # layer 1 restore
         if layer_1_pixel != []:
@@ -421,10 +472,10 @@ def tetris_loop():
                         tetris_screen.color_layers[row][column][1] = layer_1_color[row][column]
 
         if "left" in tetris._actual_inputs:
-            if (x > 5) and not (tetris._screen.pixel_layers[y][x - 1][1] == "███" or tetris._screen.pixel_layers[y + 1][x - 1][1] == "███"):
+            if (x > 5) and not (tetris_screen.pixel_layers[y][x - 1][1] == "███" or tetris_screen.pixel_layers[y + 1][x - 1][1] == "███"):
                 x -= 1
         if "right" in tetris._actual_inputs:
-            if (x < 15 - random_piece.width) and not (tetris._screen.pixel_layers[y][x + random_piece.width][1] == "███" or tetris._screen.pixel_layers[y + 1][x + random_piece.width][1] == "███"):
+            if (x < 15 - random_piece.width) and not (tetris_screen.pixel_layers[y][x + random_piece.width][1] == "███" or tetris_screen.pixel_layers[y + 1][x + random_piece.width][1] == "███"):
                 x += 1
         if "down" in tetris._actual_inputs:
             gravity = 3
@@ -474,9 +525,12 @@ def tetris_loop():
         for index in clear_lines:
             layer_1_pixel.pop(index)
             layer_1_color.pop(index)
-        for _ in range(len(clear_lines)):
-            layer_1_pixel.insert(0, deepcopy(pixel_line_blank))
-            layer_1_color.insert(0, deepcopy(color_line_blank))
+        for row in range(len(clear_lines)):
+            layer_1_pixel.insert(0, [])
+            layer_1_color.insert(0, [])
+            for column in range(tetris_screen.width):
+                layer_1_pixel[0].append(deepcopy(pixel_line_blank[column][0]))
+                layer_1_color[0].append(deepcopy(color_line_blank[column][0]))
         
         if layer_1_pixel != []:
             for row in range(len(layer_1_pixel)):
@@ -490,7 +544,7 @@ def tetris_loop():
         print(tetris._actual_inputs)
         time.sleep(0.2)
 
-        log("info", f"layer 1 dump:\n{layer_1_pixel}")
+        #log("info", f"layer 1 dump:\n{layer_1_pixel}")
 
 tetris.start_input()
 tetris.start_machine(tetris_loop)
