@@ -23,3 +23,9 @@ The `screen` class has many methods to modify it's memory, which is divided into
 
 #### Sprites
 The `sprite` class is a calss that has some parameters attached to it; `height`, `width`, `pixel_data`, `color_data`, and other parameters. All these propieties manage how the sprite is drawn to the screen. The data itself is writen on a "Human Friendly" format, then is translated into engine raw data for it to process.
+___
+### Examples
+The engine includes some example games to try out
+
+#### Tetris (Python)
+A recreation of tetris inside the pyrcade engine, is atached to the end of the engines code
