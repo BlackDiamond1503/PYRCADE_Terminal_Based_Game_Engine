@@ -135,6 +135,10 @@ def tetris_loop():
     fall = True
     fallen = False
     full_fall = False
+    gameover = False
+    y = -2
+    x = 9
+    collision = False
     # tetris funtions
     def check_piece_collitions(piece: Sprite, x, y, piece_rotation, direction: Literal["R", "L", "D", "Rot"], cuantity: int = 1):
         piece_data, piece_color = piece.load_raw(piece_rotation)
@@ -147,7 +151,7 @@ def tetris_loop():
                         new_y = y + row
                         if direction == "L" or direction == "R":
                             new_x += cuantity
-                        elif direction == "D":
+                        if direction == "D":
                             new_y += cuantity
                         if new_x < 5:
                             return True
@@ -155,12 +159,11 @@ def tetris_loop():
                             return True
                         if new_y >= tetris_screen.height:
                             return True
-                        else:
-                            try:
-                                if layer_1_pixel[new_y][new_x] != "nop":
-                                    return True
-                            except IndexError:
-                                continue
+                        try:
+                            if layer_1_pixel[new_y][new_x] != "nop":
+                                return True
+                        except IndexError:
+                            continue
                         
         return False
     # game loop
@@ -201,30 +204,26 @@ def tetris_loop():
             piece = True
             fallen = False
             random_piece = random.choice(pieces)
+            if y <= 0 and check_piece_collitions(random_piece, x, y, rotation, "D", 1):
+                gameover = True
             x = 9
             y = -2
 
         collision = False
-        if piece == True and y > 0:
+        if piece == True:
             for i in range(gravity):
                 for px in range(random_piece.width):
                     if tetris_debug == True:
                         tetris_screen.create_pixel(x + px, y + random_piece.height + 1, 3, ("███", "", color.fg(9))) # debug draw for collisión
                     if check_piece_collitions(random_piece, x, y, rotation, "D", 1):
                         collision = True
-                        draw_layer = 1
-                    if fallen:
                         piece = False
+                        draw_layer = 1
                     elif collision:
-                        fallen = True
                         fall = False
                 if collision == False:
-                    if fall and not full_fall:
+                    if fall:
                         y += 1
-            tetris_screen.create_sprite(x, y, draw_layer, random_piece.load_raw(rotation), 0, random_piece)
-        elif piece == True and y <= 0:
-            if fall and not full_fall:
-                y += 1
             tetris_screen.create_sprite(x, y, draw_layer, random_piece.load_raw(rotation), 0, random_piece)
         clear_lines = []
         for row_line in range(len(layer_1_pixel)): # single row building
@@ -268,6 +267,8 @@ def tetris_loop():
         tetris_screen.print_screen()
         print(tetris._actual_inputs, x, y, piece, rotation)
         time.sleep(0.1)
+        if gameover:
+            break
 
         #log("info", f"layer 1 dump:\n{layer_1_pixel}")
 
