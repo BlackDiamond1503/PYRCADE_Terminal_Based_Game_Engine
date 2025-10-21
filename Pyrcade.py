@@ -507,7 +507,6 @@ def tetris_loop():
         tetris_screen.memory_reset()
         tetris_screen.set_bg(5, 0, 15, 20, color.bg(6))
 
-        # layer 1 restore
         if layer_1_pixel != []:
             for row in range(len(layer_1_pixel)):
                 for column in range(len(layer_1_pixel[row])):
