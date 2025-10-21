@@ -255,8 +255,6 @@ class MemoryBank:
                     for layer in range(z):
                         self._memory[row + sy][column + sx][layer + sz] = information_bank[row][column][layer]
 
-        
-
 class Screen:
     def __init__(self, height: int, width: int):
         self.height = height
@@ -436,7 +434,7 @@ class Arcade:
 tetris_screen = Screen(20, 20)
 tetris = Arcade("pyrcade_tetris", tetris_screen, "secondary")
 def tetris_loop():
-    #t etris pieces sprites
+    #tetris pieces sprites
     sprites_data = ["███", "███", 
                     "███", "███"]
     colors_data = "y"
@@ -457,13 +455,80 @@ def tetris_loop():
                     "nop", "███", "nop",
                     "nop", "███", "nop", 
                     "███", "███", "nop",]
-    
     colors_data = color.fg(202)
     tetromino2 = Sprite("tetromino2", 3, 3, sprites_data, "single_custom", colors_data, "multi", 4)
+
+    sprites_data = ["nop", "nop", "███",
+                    "███", "███", "███", 
+                    "nop", "nop", "nop",
+                    
+                    "nop", "███", "nop",
+                    "nop", "███", "nop", 
+                    "nop", "███", "███",
+                    
+                    "nop", "nop", "nop",
+                    "███", "███", "███", 
+                    "███", "nop", "nop",
+                    
+                    "███", "███", "nop",
+                    "nop", "███", "nop", 
+                    "nop", "███", "nop",]
+    colors_data = color.fg(20)
+    tetromino3 = Sprite("tetromino2", 3, 3, sprites_data, "single_custom", colors_data, "multi", 4)
+
+    sprites_data = ["nop", "███", "nop",
+                    "███", "███", "███", 
+                    "nop", "nop", "nop",
+                    
+                    "nop", "███", "nop",
+                    "nop", "███", "███", 
+                    "nop", "███", "nop",
+                    
+                    "nop", "nop", "nop",
+                    "███", "███", "███", 
+                    "nop", "███", "nop",
+                    
+                    "nop", "███", "nop",
+                    "███", "███", "nop", 
+                    "nop", "███", "nop",]
+    colors_data = color.fg(162)
+    tetromino4 = Sprite("tetromino2", 3, 3, sprites_data, "single_custom", colors_data, "multi", 4)
+
+    sprites_data = ["nop", "███", "nop",
+                    "nop", "███", "███", 
+                    "nop", "nop", "███",
+                    
+                    "nop", "nop", "nop",
+                    "nop", "███", "███", 
+                    "███", "███", "nop",]
+    colors_data = color.fg(196)
+    tetromino5 = Sprite("tetromino2", 3, 3, sprites_data, "single_custom", colors_data, "multi", 2)
+
+    sprites_data = ["nop", "nop", "███",
+                    "nop", "███", "███", 
+                    "nop", "███", "nop",
+                    
+                    "nop", "nop", "nop",
+                    "███", "███", "nop", 
+                    "nop", "███", "███",]
+    colors_data = color.fg(40)
+    tetromino6 = Sprite("tetromino2", 3, 3, sprites_data, "single_custom", colors_data, "multi", 2)
+
+    sprites_data = ["nop", "nop", "nop", "nop",
+                    "███", "███", "███", "███",
+                    "nop", "nop", "nop", "nop",
+                    "nop", "nop", "nop", "nop",
+                    
+                    "nop", "nop", "███", "nop",
+                    "nop", "nop", "███", "nop", 
+                    "nop", "nop", "███", "nop",
+                    "nop", "nop", "███", "nop",]
+    colors_data = color.fg(33)
+    tetromino7 = Sprite("tetromino2", 4, 4, sprites_data, "single_custom", colors_data, "multi", 2)
     # tetris variables
     piece = False
-    pieces = [tetromino1, tetromino2]
-    tetris_screen.initialize(5, color.bg(14))
+    pieces = [tetromino1, tetromino2, tetromino3, tetromino4, tetromino5, tetromino6, tetromino7]
+    tetris_screen.initialize(5, color.bg(236))
     piece = False
     layer_1_pixel = []
     layer_1_color = []
@@ -471,6 +536,8 @@ def tetris_loop():
     rotation = 0
     new_rot = 0
     tetris_debug = False
+    fall = True
+    fallen = False
     # tetris funtions
     def check_piece_collitions(piece: Sprite, x, y, piece_rotation, direction: Literal["R", "L", "D", "Rot"], cuantity: int = 1):
         piece_data, piece_color = piece.load_raw(piece_rotation)
@@ -491,25 +558,31 @@ def tetris_loop():
                             return True
                         if new_y >= tetris_screen.height:
                             return True
-                        if new_y >= 0:
+                        else:
                             try:
                                 if layer_1_pixel[new_y][new_x] != "nop":
                                     return True
                             except IndexError:
                                 continue
+                        
         return False
     # game loop
     while True:
         draw_layer = 2
         gravity = 1
         tetris_screen.memory_reset()
-        tetris_screen.set_bg(5, 0, 15, 20, color.bg(6))
+        tetris_screen.set_bg(5, 0, 15, 20, color.bg(0))
 
         if layer_1_pixel != []:
             for row in range(len(layer_1_pixel)):
                 for column in range(len(layer_1_pixel[row])):
                     tetris_screen.pixel_layers[row][column][1] = layer_1_pixel[row][column]
                     tetris_screen.color_layers[row][column][1] = layer_1_color[row][column]
+
+        if fall:
+            fall = False
+        elif not fall:
+            fall = True
 
         if "left" in tetris._actual_inputs:
             if not check_piece_collitions(random_piece, x, y, rotation, "L", -1):
@@ -518,7 +591,7 @@ def tetris_loop():
             if not check_piece_collitions(random_piece, x, y, rotation, "R", 1):
                 x += 1
         if "down" in tetris._actual_inputs:
-            gravity = 3
+            fall = True
         if "space" in tetris._actual_inputs:
             new_rot = (rotation + 1) % random_piece._sprite_cuantity
             if not check_piece_collitions(random_piece, x, y, new_rot, "Rot", 1):
@@ -529,6 +602,7 @@ def tetris_loop():
             rotation = 0
             draw_layer = 2
             piece = True
+            fallen = False
             random_piece = random.choice(pieces)
             x = 9
             y = -2
@@ -542,12 +616,18 @@ def tetris_loop():
                     if check_piece_collitions(random_piece, x, y, rotation, "D", 1):
                         collision = True
                         draw_layer = 1
+                    if fallen:
                         piece = False
+                    elif collision:
+                        fallen = True
+                        fall = False
                 if collision == False:
-                    y += 1
+                    if fall:
+                        y += 1
             tetris_screen.create_sprite(x, y, draw_layer, random_piece.load_raw(rotation), 0, random_piece)
         elif piece == True and y <= 0:
-            y += 1
+            if fall:
+                y += 1
             tetris_screen.create_sprite(x, y, draw_layer, random_piece.load_raw(rotation), 0, random_piece)
 
         clear_lines = []
@@ -591,7 +671,7 @@ def tetris_loop():
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
         print(tetris._actual_inputs, x, y, piece, rotation)
-        time.sleep(0.2)
+        time.sleep(0.1)
 
         #log("info", f"layer 1 dump:\n{layer_1_pixel}")
 
