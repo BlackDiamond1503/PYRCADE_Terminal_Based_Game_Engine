@@ -459,7 +459,6 @@ def tetris_loop():
                     "███", "███", "nop",]
     
     colors_data = color.fg(202)
-
     tetromino2 = Sprite("tetromino2", 3, 3, sprites_data, "single_custom", colors_data, "multi", 4)
     # tetris variables
     piece = False
