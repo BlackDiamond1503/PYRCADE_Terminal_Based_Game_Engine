@@ -471,7 +471,6 @@ def tetris_loop():
     draw_layer = 2
     rotation = 0
     new_rot = 0
-    # debug on / off
     tetris_debug = False
     # tetris funtions
     def check_piece_collitions(piece: Sprite, x, y, piece_rotation, direction: Literal["R", "L", "D", "Rot"], cuantity: int = 1):
