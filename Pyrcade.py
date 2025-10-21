@@ -30,6 +30,7 @@ class ColorManager:
         return f"\u001b[48;5;{code}m"
 
 log("system", "loading color manager...")
+
 color = ColorManager()
 
 preset_color_codes = {"k" : color.fg(0), 
@@ -50,7 +51,7 @@ preset_color_codes = {"k" : color.fg(0),
                       "W" : color.fg(15)}
 
 class Sprite:
-    def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1):
+    def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "single_custom"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1, extra_val_1 = None, extra_val_2 = None, extra_val_3 = None):
         '''
         :param sprite_data: Is a list with "pixel" data of the Sprite. Every pixel MUST be 3 characters long
         :type sprite_data:  list[str, str, str, ...]
@@ -70,6 +71,9 @@ class Sprite:
         self.name = name
         self.sprite_mode = sprite_mode
         self._sprite_cuantity = sprite_cuantity
+        self.extra1 = extra_val_1
+        self.extra2 = extra_val_2
+        self.extra3 = extra_val_3
 
         # data type validator
         if type(color_data) != list and color_mode == "pixel":
@@ -130,6 +134,13 @@ class Sprite:
                     if pixel_data[index] != "nop":
                         pixel_raw_data.append(pixel_data[index])
                         color_raw_data.append(preset_color_codes.get(color_data, ""))
+                    else:
+                        pixel_raw_data.append("nop")
+                        color_raw_data.append("")
+                elif self._color_mode == "single_custom":
+                    if pixel_data[index] != "nop":
+                        pixel_raw_data.append(pixel_data[index])
+                        color_raw_data.append(color_data)
                     else:
                         pixel_raw_data.append("nop")
                         color_raw_data.append("")
@@ -289,9 +300,9 @@ class Screen:
                     if pixel_write_data[offset + (row * Sprite.width) + column] != "nop":
                         self.pixel_layers[y + row][x + column][layer] = pixel_write_data[offset + (row * Sprite.width) + column]
                         self.color_layers[y + row][x + column][layer] = color_write_data[offset + (row * Sprite.width) + column]
-                    else:
-                        self.pixel_layers[y + row][x + column][layer] = "   "
-                        self.color_layers[y + row][x + column][layer] = ""
+                    elif self.pixel_layers[y + row][x + column][layer] == "nop":
+                        self.pixel_layers[y + row][x + column][layer] = "nop"
+                        self.color_layers[y + row][x + column][layer] = "nop"
 
     def create_pixel(self, x: int, y: int, layer: int, pixel_data: Tuple[str, str, str]):
         '''
@@ -429,33 +440,56 @@ def tetris_loop():
     sprites_data = ["███", "███", 
                     "███", "███"]
     colors_data = "y"
-    tetromino1_1 = Sprite("tetromino1", 2, 2, sprites_data, "single", colors_data, "single", 1)
-    sprites_data = ["nop", "nop", "nop",
-                    "███", "nop", "nop", 
-                    "███", "███", "███",
+    tetromino1 = Sprite("tetromino1", 2, 2, sprites_data, "single", colors_data, "single", 1)
+    
+    sprites_data = ["███", "nop", "nop",
+                    "███", "███", "███", 
+                    "nop", "nop", "nop",
                     
-                    "███", "███", "nop",
-                    "███", "nop", "nop", 
-                    "███", "nop", "nop",
+                    "nop", "███", "███",
+                    "nop", "███", "nop", 
+                    "nop", "███", "nop",
                     
                     "nop", "nop", "nop",
                     "███", "███", "███", 
                     "nop", "nop", "███",
                     
-                    "███", "███", "nop",
+                    "nop", "███", "nop",
                     "nop", "███", "nop", 
-                    "nop", "███", "nop",]
-    colors_data = "r"
+                    "███", "███", "nop",]
+    
+    colors_data = color.fg(202)
+
+    tetromino2 = Sprite("tetromino2", 3, 3, sprites_data, "single_custom", colors_data, "multi", 4)
     # tetris variables
     piece = False
-    pieces = [tetromino1_1]
+    collition_types = ["full", "custom"]
+    pieces = [tetromino1, tetromino2]
     tetris_screen.initialize(5, color.bg(14))
     piece = False
     layer_1_pixel = []
     layer_1_color = []
     draw_layer = 2
+    rotation = 0
     # debug on / off
     tetris_debug = False
+    # tetris funtions
+    def check_piece_collitions(piece: Sprite, x, y, piece_rotation, direction: Literal["R", "L", "D"], cuantity: int = 1):
+        piece_data, piece_color = piece.load_raw(piece_rotation)
+        for i in range(len(piece_data)):
+            for row in range(piece.height):
+                for column in  range(piece.width):
+                    try:
+                        if layer_1_pixel[y + row + cuantity][x + column] == "███" and piece_data[row * piece.width + column] == "███" and direction == "D":
+                            return True
+                        elif (direction == "L" or direction == "R") and layer_1_pixel[y + row][x + column + cuantity] == "███" and piece_data[row * piece.width + column] == "███":
+                            return True
+                    except IndexError:
+                        if y + row + cuantity >= tetris_screen.height and piece_data[row * piece.width + column] == "███" and direction == "D":
+                            return True
+                        elif (x + column + cuantity <= 5 or x + column + cuantity >= 15) and piece_data[row * piece.width + column] == "███" and (direction == "R" or direction == "L"):
+                            return True
+        return False
     # game loop
     while True:
         draw_layer = 2
@@ -467,15 +501,14 @@ def tetris_loop():
         if layer_1_pixel != []:
             for row in range(len(layer_1_pixel)):
                 for column in range(len(layer_1_pixel[row])):
-                    if layer_1_pixel[row][column] != "nop":
-                        tetris_screen.pixel_layers[row][column][1] = layer_1_pixel[row][column]
-                        tetris_screen.color_layers[row][column][1] = layer_1_color[row][column]
+                    tetris_screen.pixel_layers[row][column][1] = layer_1_pixel[row][column]
+                    tetris_screen.color_layers[row][column][1] = layer_1_color[row][column]
 
         if "left" in tetris._actual_inputs:
-            if (x > 5) and not (tetris_screen.pixel_layers[y][x - 1][1] == "███" or tetris_screen.pixel_layers[y + 1][x - 1][1] == "███"):
+            if (x > 5) and not check_piece_collitions(random_piece, x, y, rotation, "R", -1):
                 x -= 1
         if "right" in tetris._actual_inputs:
-            if (x < 15 - random_piece.width) and not (tetris_screen.pixel_layers[y][x + random_piece.width][1] == "███" or tetris_screen.pixel_layers[y + 1][x + random_piece.width][1] == "███"):
+            if (x < 15 - random_piece.width) and not check_piece_collitions(random_piece, x, y, rotation, "R", 1):
                 x += 1
         if "down" in tetris._actual_inputs:
             gravity = 3
@@ -488,17 +521,20 @@ def tetris_loop():
             y = -2
 
         collision = False
-        if piece == True:
+        if piece == True and y > 0:
             for i in range(gravity):
                 for px in range(random_piece.width):
                     if tetris_debug == True:
                         tetris_screen.create_pixel(x + px, y + random_piece.height + 1, 3, ("███", "", color.fg(9))) # debug draw for collisión
-                    if ((y + random_piece.height) >= tetris_screen.height) or (tetris_screen.pixel_layers[y + random_piece.height][x + px][1] == "███") or (y > tetris_screen.height - random_piece.height):
+                    if check_piece_collitions(random_piece, x, y, rotation, "D", 1) or y + random_piece.height == tetris_screen.height:
                         collision = True
                         draw_layer = 1
                         piece = False
                 if collision == False:
                     y += 1
+            tetris_screen.create_sprite(x, y, draw_layer, random_piece.load_raw(), 0, random_piece)
+        elif piece == True and y <= 0:
+            y += 1
             tetris_screen.create_sprite(x, y, draw_layer, random_piece.load_raw(), 0, random_piece)
 
         clear_lines = []
@@ -541,7 +577,7 @@ def tetris_loop():
 
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
-        print(tetris._actual_inputs)
+        print(tetris._actual_inputs, x, y, piece)
         time.sleep(0.2)
 
         #log("info", f"layer 1 dump:\n{layer_1_pixel}")
