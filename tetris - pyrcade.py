@@ -145,7 +145,26 @@ def tetris_loop():
                     
                     "   ", "   ",
                     " ▀▀", "▀▀ "]
-    colors_data = color.fg(15)
+    colors_data =  [color.fg(11), color.fg(11),
+                    color.fg(11), color.fg(11),
+                    
+                    color.fg(208), color.fg(208),
+                    color.fg(208), color.fg(208),
+
+                    color.fg(12), color.fg(12),
+                    color.fg(12), color.fg(12),
+                    
+                    color.fg(13), color.fg(13),
+                    color.fg(13), color.fg(13),
+                    
+                    color.fg(9), color.fg(9),
+                    color.fg(9), color.fg(9),
+                    
+                    color.fg(10), color.fg(10),
+                    color.fg(10), color.fg(10),
+                    
+                    color.fg(14), color.fg(14),
+                    color.fg(14), color.fg(14)]
     smol_pieces = Sprite("smol_pieces", 2, 2, sprites_data, "pixel_custom", colors_data, "multi", 7)
     # tetris variables
     piece = False
@@ -167,10 +186,11 @@ def tetris_loop():
     saved = False
     saved_this_piece = False
     random_piece: Sprite
+    score = 0
     # tetris funtions
     def check_piece_collitions(piece: Sprite, x, y, piece_rotation, direction: Literal["R", "L", "D", "Rot"], cuantity: int = 1):
-        piece_data, piece_color = piece.load_raw(piece_rotation)
-        for i in range(len(piece_data)):
+        piece_data, _ = piece.load_raw(piece_rotation)
+        for _ in range(len(piece_data)):
             for row in range(piece.height):
                 for column in  range(piece.width):
                     index = row * piece.width + column
@@ -257,6 +277,8 @@ def tetris_loop():
             draw_layer = 2
             piece = True
             random_piece = pieces_preview.pop(0)
+            if collision:
+                score += 40
             while len(pieces_preview) != 4:
                 new_piece = random.choice(pieces)
                 if not new_piece in pieces_preview:
@@ -271,7 +293,7 @@ def tetris_loop():
 
         collision = False
         if piece == True:
-            for i in range(gravity):
+            for _ in range(gravity):
                 for px in range(random_piece.width):
                     if tetris_debug == True:
                         tetris_screen.create_pixel(x + px, y + random_piece.height + 1, 3, ("███", "", color.fg(9))) # debug draw for collisión
@@ -316,6 +338,7 @@ def tetris_loop():
         for index in clear_lines:
             layer_1_pixel.pop(index)
             layer_1_color.pop(index)
+            score += 100
         for row in range(len(clear_lines)):
             layer_1_pixel.insert(0, [])
             layer_1_color.insert(0, [])
@@ -346,7 +369,19 @@ def tetris_loop():
         tetris_screen.set_bg(1, 16, 3, 18, "")
         if saved_piece != None:
             tetris_screen.create_sprite(1, 16, 2, smol_pieces.load_raw(slot_idxs.get(saved_piece.name)), 0, smol_pieces)
-            
+        tetris_screen.create_text(15, 1, 2, ("   POINTS   ", color.fg(15), ""))
+        scorestr = str(score)
+        workvar = ""
+        if len(scorestr) % 3 != 0:
+            for _ in range(3 - (len(scorestr) % 3)):
+                workvar = workvar + " "
+        scorestr = workvar + scorestr
+        cells = len(scorestr) // 3
+        for _ in range(4 - cells):
+            scorestr = "   " + scorestr
+        tetris_screen.create_text(15, 2, 2, (scorestr, color.fg(15), ""))
+
+
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
         #print(tetris._actual_inputs, x, y, piece, rotation, random_piece.name)
