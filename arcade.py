@@ -146,7 +146,7 @@ def tetris_loop():
                     "   ", "   ",
                     " ▀▀", "▀▀ "]
     colors_data = color.fg(15)
-    smol_pieces = Sprite("smol_pieces", 2, 2, sprites_data, "single_custom", colors_data, "multi", 7)
+    smol_pieces = Sprite("smol_pieces", 2, 2, sprites_data, "pixel_custom", colors_data, "multi", 7)
     # tetris variables
     piece = False
     pieces = [tetromino1, tetromino2, tetromino3, tetromino4, tetromino5, tetromino6, tetromino7]

@@ -51,7 +51,7 @@ preset_color_codes = {"k" : color.fg(0),
                       "W" : color.fg(15)}
 
 class Sprite:
-    def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "single_custom"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1, extra_val_1 = None, extra_val_2 = None, extra_val_3 = None):
+    def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "single_custom", "pixel_custom"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1, extra_val_1 = None, extra_val_2 = None, extra_val_3 = None):
         '''
         :param sprite_data: Is a list with "pixel" data of the Sprite. Every pixel MUST be 3 characters long
         :type sprite_data:  list[str, str, str, ...]
@@ -141,6 +141,17 @@ class Sprite:
                     if pixel_data[index] != "nop":
                         pixel_raw_data.append(pixel_data[index])
                         color_raw_data.append(color_data)
+                    else:
+                        pixel_raw_data.append("nop")
+                        color_raw_data.append("")
+                elif self._color_mode == "pixel_custom":
+                    if pixel_data[index] != "nop":
+                        if color_data[index] == " ":
+                            pixel_raw_data.append(str(pixel_data[index]))
+                            color_raw_data.append("")
+                        else:
+                            pixel_raw_data.append(str(pixel_data[index]))
+                            color_raw_data.append(color_data[index])
                     else:
                         pixel_raw_data.append("nop")
                         color_raw_data.append("")
