@@ -266,6 +266,9 @@ class Screen:
         self.color_blank = []
 
     def create_text(self, x: int, y: int, layer: int, text_data: Tuple[str, str, str]):
+        '''
+        :param text_data: Tuple (Text, fg color, bg color)
+        '''
         text, fg, bg = text_data
         workvar = ""
         text_pixel_data = []
@@ -276,14 +279,14 @@ class Screen:
                 workvar = ""
         for pixel in text_pixel_data:
             if layer != 0:
-                if (0 <= x < self.width) and (0 <= y < self.height):
-                    continue
-                elif bg != "":
+                if (0 <= x < self.width) and (0 <= y < self.height) and bg != "":
                     self.pixel_layers[y][x][layer] = f"{pixel}"
                     self.color_layers[y][x][layer] = f"{bg}{fg}"
-                else:
+                elif (0 <= x < self.width) and (0 <= y < self.height) and bg == "":
                     self.pixel_layers[y][x][layer] = f"{pixel}"
                     self.color_layers[y][x][layer] = f"{fg}"
+                else:
+                    continue
             x += 1
 
     def create_sprite(self, x: int, y: int, layer: int, sprite_data_raw: tuple, sprite_num: int = 0, Sprite: Sprite = None):
