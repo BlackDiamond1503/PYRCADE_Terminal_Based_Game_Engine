@@ -423,19 +423,19 @@ class Arcade:
         self._mode = mode
         self.input = ""
         self._key_map = key_map
-        self._engine_ver = 1.0
+        self._engine_ver = "1.0.1"
 
     def start_machine(self, game_code = None):
         '''
         :param game_code: Is the game's code. If the game is a python game, it should be a callable object. If the game is a pyrcade script game, it should be a str, specifically the name of the "ROM". The ROM is a .pyrs file (PYRcade Script file)
         '''
         log("Arcade", f"starting Arcade machine {self.arcade_name}...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
-        if self.mode == "Terminal":
-            if self._type == "python_game" and type(game_code) == callable:
+        if self._mode == "Terminal":
+            if self._type == "python_game":
                 sys.stdout.write("\033[2J\033[H")
                 sys.stdout.flush()
                 game_code()
-        elif self.mode == "Windowed":
+        elif self._mode == "Windowed":
             root = tk.Tk()
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
