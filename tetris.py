@@ -3,7 +3,7 @@ from pyrcade_engine import *
 # tetris example in python (full potential)
 tetris_screen = Screen(20, 20)
 frame_counter = 0
-tetris = Arcade("pyrcade_tetris", tetris_screen, "secondary")
+tetris = Arcade("pyrcade_tetris", tetris_screen, "python_game", "Terminal")
 def tetris_loop():
     global frame_counter
     #tetris pieces sprites

@@ -15,11 +15,11 @@ ___
 A game ROM is formed by 3 files; one `.pyrg`, one `.pyrs` and one `.pyra`. These files **MUST** have the same name, so the launcher can recognize the ROM, if not, the launcher will refuse to see the ROM and raises an `IncompleteROMError`.
 ___
 ### General Syntax
-+ Spaces:
+#### Spaces:
 
 > Spaces are ignored if they are not interacting directly with an object's name. Aka, if the space is not inside `{}`, `()` or `::`, the interpreter ignores them.
 
-+ Comments:
+#### Comments:
 
 ```
 # single line comment
@@ -32,13 +32,13 @@ multi line comment / comment block
 
 > Using a `#` creates a single line comment, using a set of `'''` starts or ends a comment block.
 
-+ Commands and Objects:
+#### Commands and Objects:
 ```
 :name: (argument){value}; (argument){value}
 ```
 > Indicates the use of a `command`, or to set a `metadata` or a `variable` object's `values`. A `command` or `metadata` name doesn't have spaces, if it does, or the name is not found, the object is treated as a custom `variable`. The `arguments` or `values` to use are declared right after the last `:`.
 
-+ Arguments and Values
+#### Arguments and Values
 ```
 {argument}(value); ...
 ```
@@ -46,4 +46,5 @@ multi line comment / comment block
 > A value can be given via `()`, some commands requiere a value after an argument, or only a value. The value has to go right after the argument, if not, the interpreter will raise an `ArgumentError`
 ___
 ### Pyrcade Game File (`.pyrg`)
-This file acts as the **header** of the ROM, it contains metadata for the game that the interpreter uses to create the game instance 
+This file acts as the **header** of the ROM, it contains metadata for the game that the interpreter uses to create the game instance. The metadata that this file **MUST** contain is described bellow.
+
