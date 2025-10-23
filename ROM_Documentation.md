@@ -53,9 +53,15 @@ This file acts as the **header** of the ROM, it contains metadata for the game t
 :name: {name}
 ```
 #### Type:
-> [!CAUTION]
-> Not Finished Yet
+> [!NOTE]
+> Not implemented yet
 ```
 :type: {type}
 ```
-> The type of the game, it says if the game runs on the **Terminal** or on a **Window**
+> The type of the game, it says if the game runs on the **Terminal** or on a separate **Window**  
+
+Posible Values:
+ ```
+ :type: {terminal}
+ :type: {windowed}
+```
