@@ -1,6 +1,7 @@
 import time, sys, pynput, random, datetime
 from typing import Literal, Tuple
 from copy import deepcopy
+import tkinter as tk
 
 DEBUG = True
 initial_datetime = ""
@@ -415,10 +416,11 @@ default_keymap = {"up"          : pynput.keyboard.Key.up,
                   "backspace"   : pynput.keyboard.Key.backspace}
 
 class Arcade:
-    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], key_map: dict = default_keymap):
+    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], mode: Literal["Terminal", "Windowed"] = "Terminal", key_map: dict = default_keymap):
         self.arcade_name = arcade_name
         self._screen = Screen
         self._type = type
+        self._mode = mode
         self.input = ""
         self._key_map = key_map
         self._engine_ver = 1.0
@@ -428,11 +430,13 @@ class Arcade:
         :param game_code: Is the game's code. If the game is a python game, it should be a callable object. If the game is a pyrcade script game, it should be a str, specifically the name of the "ROM". The ROM is a .pyrs file (PYRcade Script file)
         '''
         log("Arcade", f"starting Arcade machine {self.arcade_name}...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
-        if game_code != None:
-            if self._type == "python_game":
+        if self.mode == "Terminal":
+            if self._type == "python_game" and type(game_code) == callable:
                 sys.stdout.write("\033[2J\033[H")
                 sys.stdout.flush()
                 game_code()
+        elif self.mode == "Windowed":
+            root = tk.Tk()
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
         log("Arcade", f"Arcade {self.arcade_name} started input logger")
