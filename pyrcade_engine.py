@@ -415,18 +415,23 @@ default_keymap = {"up"          : pynput.keyboard.Key.up,
                   "backspace"   : pynput.keyboard.Key.backspace}
 
 class Arcade:
-    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["main", "secondary"], key_map: dict = default_keymap):
+    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], key_map: dict = default_keymap):
         self.arcade_name = arcade_name
         self._screen = Screen
         self._type = type
         self.input = ""
         self._key_map = key_map
 
-    def start_machine(self, mainloop_code: callable):
+    def start_machine(self, game_code = None):
+        '''
+        :param game_code: Is the game's code. If the game is a python game, it should be a callable object. If the game is a pyrcade script game, it should be a str, specifically the name of the "ROM". The ROM is a .pyrs file (PYRcade Script file)
+        '''
         log("Arcade", f"starting Arcade machine {self.arcade_name}...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
-        sys.stdout.write("\033[2J\033[H")
-        sys.stdout.flush()
-        mainloop_code()
+        if game_code != None:
+            if self._type == "python_game":
+                sys.stdout.write("\033[2J\033[H")
+                sys.stdout.flush()
+                game_code()
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
         log("Arcade", f"Arcade {self.arcade_name} started input logger")
