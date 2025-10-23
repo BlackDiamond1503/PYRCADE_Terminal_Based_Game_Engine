@@ -421,6 +421,7 @@ class Arcade:
         self._type = type
         self.input = ""
         self._key_map = key_map
+        self._engine_ver = 1.0
 
     def start_machine(self, game_code = None):
         '''
