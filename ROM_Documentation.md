@@ -38,7 +38,7 @@ multi line comment / comment block
 ```
 > Indicates the use of a `command`, or to set a `metadata` or a `variable` object's `values`. A `command` or `metadata` name doesn't have spaces, if it does, or the name is not found, the object is treated as a custom `variable`. The `arguments` or `values` to use are declared right after the last `:`.
 
-#### Arguments and Values
+#### Arguments and Values:
 ```
 {argument}(value); ...
 ```
@@ -48,3 +48,14 @@ ___
 ### Pyrcade Game File (`.pyrg`)
 This file acts as the **header** of the ROM, it contains metadata for the game that the interpreter uses to create the game instance. The metadata that this file **MUST** contain is described bellow.
 
+#### Name:
+```
+:name: {name}
+```
+#### Type:
+> [!CAUTION]
+> Not Finished Yet
+```
+:type: {type}
+```
+> The type of the game, it says if the game runs on the **Terminal** or on a **Window**
