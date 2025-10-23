@@ -1,0 +1,2 @@
+In this branch the only file not to modify will be ROM_Documentation.md and other files that are modified on the main branch.
+The main file to modify will be pyrcade_engine.py
