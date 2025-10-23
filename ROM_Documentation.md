@@ -9,9 +9,11 @@ A Pyrcade ROM is conformed by 3 different files, these are:
 > This file is the game's code, it will contain the instructions for the game in the language **Pyrcade Script**, this language is better detailed in the [Pyrcade Script]() section of this documentation.
 ### Pyrcade Asset File (`.pyra`)
 > This file contains the graphical information if the game; sprites, text, logos, etc. This file is separated on "Data Blocks", each item has one data block with it's own metadata.
-
+___
+___
 ## File Syntax
 A game ROM is formed by 3 files; one `.pyrg`, one `.pyrs` and one `.pyra`. These files **MUST** have the same name, so the launcher can recognize the ROM, if not, the launcher will refuse to see the ROM and raises an `IncompleteROMError`.
+___
 ### General Syntax
 + Spaces:
 
@@ -42,6 +44,6 @@ multi line comment / comment block
 ```
 > An argument can be given via `{}`, every `command` / `function` has their own arguments, they are greatly explained in the [Pyrcade Script]() section.
 > A value can be given via `()`, some commands requiere a value after an argument, or only a value. The value has to go right after the argument, if not, the interpreter will raise an `ArgumentError`
-
-
- 
+___
+### Pyrcade Game File (`.pyrg`)
+This file acts as the **header** of the ROM, it contains metadata for the game that the interpreter uses to create the game instance 
