@@ -1,4 +1,4 @@
-import time, sys, pynput, random, datetime
+import time, sys, pynput, random, datetime, threading
 from typing import Literal, Tuple
 from copy import deepcopy
 import tkinter as tk
@@ -406,6 +406,18 @@ class Screen:
         sys.stdout.write("\033[2J\033[H\n" + screen_print)
         sys.stdout.flush()
 
+class TkScreen:
+    def __init__(self, width: int = 10, height: int = 10, pixel_size: int = 20):
+        self.root = tk.Tk()
+        self.width = width
+        self.height = height
+        self.pixel_size = pixel_size
+        self.root.grid(width = self.width, height = self.height)
+        for row in range(self.height):
+            for column in range(self.width):
+                pixel = tk.Label(self.root, bg = "#000000", width = self.pixel_size, height = self.pixel_size)
+                pixel.grid(row = row, column = column)
+
 default_keymap = {"up"          : pynput.keyboard.Key.up, 
                   "down"        : pynput.keyboard.Key.down,
                   "left"        : pynput.keyboard.Key.left,
@@ -436,7 +448,7 @@ class Arcade:
                 sys.stdout.flush()
                 game_code()
         elif self._mode == "Windowed":
-            root = tk.Tk()
+            pass
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
         log("Arcade", f"Arcade {self.arcade_name} started input logger")
