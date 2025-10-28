@@ -66,9 +66,7 @@ ___
 ___
 ___
 ### **Pyrcade Script File (.pyrs)**
-This file contains all the game's mainloop or silgle run code, you can also make functions that you can `@call:` to use them, they need to go into the `functions` folder.
-> [!NOTE]
-> The file MUST have the command `@function:` at the start of it, if not, the interpreter will not read it as a function / single run code, but as an infinite loop.
+This file contains all the game's mainloop or silgle run code, you can also make functions that you can `@call:` to use them, they need to go into the `functions` folder
 ___
 #### **Pyrcade Script**
 This is the language thet the `.pyrs` files use, it is conformed by **commands**, those commands can come in two types:  
