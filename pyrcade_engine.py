@@ -1,7 +1,7 @@
 import time, sys, pynput, random, datetime, threading
 from typing import Literal, Tuple
 from copy import deepcopy
-import tkinter as tk
+import customtkinter as ctk
 
 DEBUG = True
 initial_datetime = ""
@@ -406,17 +406,25 @@ class Screen:
         sys.stdout.write("\033[2J\033[H\n" + screen_print)
         sys.stdout.flush()
 
-class TkScreen:
+class CTkScreen:
     def __init__(self, width: int = 10, height: int = 10, pixel_size: int = 20):
-        self.root = tk.Tk()
         self.width = width
         self.height = height
         self.pixel_size = pixel_size
-        self.root.grid(width = self.width, height = self.height)
+        self.root.grid(baseWidth = self.width, baseHeight = self.height)
+        self.pixels = []
+
+    def initialize_window(self, game_title: str = "PYRcade Engine Window"):
+        self.root = ctk.CTk(game_title)
+        self.root.title()
+        self.root.resizable(False, False)
         for row in range(self.height):
+            self.pixels.append([])
             for column in range(self.width):
-                pixel = tk.Label(self.root, bg = "#000000", width = self.pixel_size, height = self.pixel_size)
+                pixel = ctk.CTkLabel(self.root, bg = "#000000", width = self.pixel_size, height = self.pixel_size)
                 pixel.grid(row = row, column = column)
+                self.pixels[row].append(pixel)
+
 
 default_keymap = {"up"          : pynput.keyboard.Key.up, 
                   "down"        : pynput.keyboard.Key.down,
