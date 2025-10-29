@@ -1,4 +1,4 @@
-import time, sys, pynput, random, datetime, threading
+import time, sys, pynput, random, datetime, threading, os, string
 from typing import Literal, Tuple
 from copy import deepcopy
 import customtkinter as ctk
@@ -7,6 +7,16 @@ DEBUG = True
 initial_datetime = ""
 def log(type: Literal["initial", "system", "warning", "info", "error", "Arcade"], message = None):
     if DEBUG == True:
+        if os.path.exists("logs") == False:
+            try:
+                print(f"Logs directory not found! - creating logs directory...")
+                os.mkdir("logs")
+                print(f"Logs directory created successfully.")
+            except Exception as e:
+                print(f"Could not create logs directory! - {e}")
+                return
+        else:
+            pass
         global initial_datetime
         date_and_time = datetime.datetime.now().strftime("%d-%m-%Y %H-%M-%S")
         if type == "initial":
@@ -50,6 +60,37 @@ preset_color_codes = {"k" : color.fg(0),
                       "C" : color.fg(14),
                       "w" : color.fg(7),
                       "W" : color.fg(15)}
+
+def ANSII_to_HEX(color_str: str):
+    start = 7
+    color_code = ""
+    for i in range(len(color_str)):
+        if color_str[i + start] == "m":
+            color_code = int(color_code)
+            break
+        else:
+            color_code += color_str[i + start]
+    if 0 <= color_code <= 15:
+        basic_colors = ["#000000", "#800000", "#008000", "#808000", "#000080", "#800080", "#008080", "#c0c0c0",
+                        "#808080", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff"]
+        return basic_colors[color_code]
+    elif 16 <= color_code <= 231:
+        coloridx = color_code - 16
+        r = coloridx // 36
+        gbidx = coloridx % 36
+        g = gbidx // 6
+        b = gbidx % 6
+        rgb_steps = ["00", "5f", "87", "af", "d7", "ff"]
+        hex_color = f"#{rgb_steps[r]}{rgb_steps[g]}{rgb_steps[b]}"
+        return hex_color
+    elif 232 <= color_code <= 255:
+        shades = ["08", "12", "1c", "26", "30", "3a", "44", "4e", "58", "62", "6c", "76", "80", "8a", "94", "9e", "a8", "b2", "bc", "c6", "d0", "da", "e4", "ee"]
+        grayidx = color_code - 232
+        shadeid = 8 + grayidx * 10
+        shade = shades[shadeid - 8]
+        hex_grey = f"#{shade}{shade}{shade}"
+        return hex_grey
+    return "#000000"
 
 class Sprite:
     def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "single_custom", "pixel_custom"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1, extra_val_1 = None, extra_val_2 = None, extra_val_3 = None):
@@ -407,24 +448,64 @@ class Screen:
         sys.stdout.flush()
 
 class CTkScreen:
-    def __init__(self, width: int = 10, height: int = 10, pixel_size: int = 20):
+    def __init__(self, width: int = 10, height: int = 10, pixel_size: int = 20, core_screen: Screen = None):
         self.width = width
         self.height = height
-        self.pixel_size = pixel_size
-        self.root.grid(baseWidth = self.width, baseHeight = self.height)
+        self.font_size = pixel_size
         self.pixels = []
+        self.thread = None
+        self.running = False
+        self.font = ctk.CTkFont(family = "Consolas", size = self.font_size)
+        if core_screen != None:
+            self.core_screen = core_screen
+        else:
+            raise Exception("CTkScreen error! - core_screen cannot be None")
 
-    def initialize_window(self, game_title: str = "PYRcade Engine Window"):
+    def _initialize_window(self, game_title: str = "PYRcade Engine Window"):
         self.root = ctk.CTk(game_title)
-        self.root.title()
+        self.root.title(game_title)
         self.root.resizable(False, False)
+        self.root.protocol("WM_DELETE_WINDOW", self._close)
+        self.pixel_space = ctk.CTkFrame(self.root, fg_color = "#000000")
+        for i in range(self.width):
+            self.pixel_space.grid_columnconfigure(i, weight = 1)
+        for i in range(self.height):    
+            self.pixel_space.grid_rowconfigure(i, weight = 1)
         for row in range(self.height):
             self.pixels.append([])
             for column in range(self.width):
-                pixel = ctk.CTkLabel(self.root, bg = "#000000", width = self.pixel_size, height = self.pixel_size)
-                pixel.grid(row = row, column = column)
+                pixel = ctk.CTkLabel(self.pixel_space, bg_color = "#000000", font = self.font, text = "   ")
+                pixel.grid(row = row, column = column, padx = 0, pady = 0, sticky = "nsew")
                 self.pixels[row].append(pixel)
+        self.pixel_space.pack(padx = 0, pady = 0)
+    
+    def _start_window(self):
+        self.running = True
+        try:
+            self._initialize_window()
+            self.running = True
+            self.root.mainloop()
+            log("system", "CTk window closed.")
+        except Exception as e:
+            log("error", f"Error initializing window: {e}")
+            self.running = False
+            self._close()
+            return
+        finally:
+            self.running = False
+            log("system", "CTk window closed.")
 
+    def _close(self):
+        pass
+
+    def start(self):
+        if self.thread is None:
+            log("system", "starting CTk window thread...")
+            self.thread = threading.Thread(target = self._start_window, daemon = True)
+            self.thread.start()
+            log("system", "CTk window thread started.")
+        else:
+            log("warning", "CTk window thread already running!")
 
 default_keymap = {"up"          : pynput.keyboard.Key.up, 
                   "down"        : pynput.keyboard.Key.down,
