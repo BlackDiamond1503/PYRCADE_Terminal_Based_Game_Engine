@@ -43,7 +43,15 @@ def log(level: Literal["initial", "system", "warning", "info", "error", "arcade"
 log("system", "logging system initialized")
 log("system", "pyrcade engine initializing...")
 
-class ColorManager: 
+class ColorManager:
+    """
+    Manages all the color codes for the engine.
+
+    Methods:
+    --------
+        fg(code):   Returns the ANSI escape code for the given foreground color code.
+        bg(code):   Returns the ANSI escape code for the given background color code.
+    """ 
     def __init__(self):
         pass
     
@@ -75,14 +83,20 @@ preset_color_codes = {"k" : color.fg(0),
                       "W" : color.fg(15)}
 
 def ANSII_to_HEX(color_str: str):
-    start = 7
+    """
+    NOT FOR PUBLIC USE\n
+    Converts a raw ANSI Escape Color code into a HEX color string
+
+    Arguments:
+        color_str:  The ANSI escape color code string to convert.
+    """
     color_code = ""
-    for i in range(len(color_str)):
-        if color_str[i + start] == "m":
+    for i in range(len(color_str) - 7):
+        if color_str[i + 7] == "m":
             color_code = int(color_code)
             break
         else:
-            color_code += color_str[i + start]
+            color_code += color_str[i + 7]
     if 0 <= color_code <= 15:
         basic_colors = ["#000000", "#800000", "#008000", "#808000", "#000080", "#800080", "#008080", "#c0c0c0",
                         "#808080", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff"]
@@ -106,8 +120,22 @@ def ANSII_to_HEX(color_str: str):
     return "#000000"
 
 class Sprite:
+    """
+    Main sprite class for handling sprite graphic data.
+    Arguments:
+        name:           The name of the sprite.
+        width:          The width of the sprite in pixels.
+        height:         The height of the sprite in pixels.
+        sprite_data:    A list of strings representing the pixel data of the sprite.
+        color_mode:     The color mode of the sprite ("single", "pixel", "single_custom", "pixel_custom").
+        color_data:     A list of strings representing the color data of the sprite.
+        sprite_mode:    The sprite mode ("single" for single-frame sprites, "multi" for multi-frame sprites).
+        sprite_cuantity:The number of frames in the sprite (only for multi-frame sprites).
+    """
     def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "single_custom", "pixel_custom"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1, extra_val_1 = None, extra_val_2 = None, extra_val_3 = None):
-        
+        """
+        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING A Sprite OBJECT.
+        """
         self.width = width
         self.height = height
         self._color_mode = color_mode
@@ -153,6 +181,12 @@ class Sprite:
         self.readable_data = (sprite_data, color_data)
 
     def load_raw(self, frame = 0):
+        """
+        Loads the raw pixel and color data for the specified frame.\n
+        Returns a tuple containing two lists: pixel_raw_data and color_raw_data.
+        Arguments:
+            frame:  The frame number to load (for multi-frame sprites).
+        """
         if self._valid_data == False:
             return
         pixel_data = self.readable_data[0]                                                 
@@ -203,8 +237,19 @@ class Sprite:
         return (pixel_raw_data, color_raw_data)   
     
 class MemoryBank:
+    """
+    NOT FINISHED NOR TESTED
+    1D, 2D and 3D memory bank class for data storage and retrieval.
+    Arguments:
+        type:           The type of memory bank ("1d", "2d", "3d").
+        read_only:      If true, the memory bank is read-only.
+        dimentions:     A string representing the dimensions of the memory bank (e.g., "10", "10x10", "10x10x10").
+        default_value:  The default value to initialize the memory bank with.
+    """
     def __init__(self, type: Literal["1d", "2d", "3d"] = "1d", read_only: bool = False, dimentions: str = "10", default_value: Literal[0, ""] = 0):
-        
+        """
+        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING A MemoryBank OBJECT.
+        """
         self._type = type
         self._writable = not read_only
         self._default = default_value
@@ -228,6 +273,9 @@ class MemoryBank:
             self._z = dimentions_int[2]
 
     def initialize(self):
+        """
+        The memory bank initializer. Ensures that the memory bank is usable.        
+        """
         if self._valid_dimentions == False:
             log("error", f"memory initialization failed: invalid dimensions declared.\n    memory: {str(self)}")
             return
@@ -248,7 +296,11 @@ class MemoryBank:
                         self._memory[row][column].append(self._default)
         
     def get(self, memory_pointer: tuple = (0,)):
-        
+        """
+        Retrieves data from the memory bank at the specified memory pointer.
+        Arguments:
+            memory_pointer:    A tuple representing the memory address to retrieve data from.
+        """
         if type(memory_pointer) != tuple:
             log("error", f"could not retrieve data: invalid memory pointer type.\n    pointer_type: {type(memory_pointer)}")
             return 0
@@ -263,8 +315,13 @@ class MemoryBank:
             log("error", f"could not retrieve data: pointer out of bounds.\n    pointer: {memory_pointer}")
             return 0
     
-    def set(self, memory_pointer: tuple = (0,), data: any = ""):
-        
+    def write(self, memory_pointer: tuple = (0,), data: any = ""):
+        """
+        Writes data to the memory bank at the specified memory pointer.
+        Arguments:
+            memory_pointer:    A tuple representing the memory address to write data to.
+            data:              The data to write to the specified memory address.
+        """
         if type(memory_pointer) != tuple:
             log("error", f"could not write data: invalid memory pointer type.\n    pointer_type: {type(memory_pointer)}")
             return
@@ -280,7 +337,13 @@ class MemoryBank:
             return
         
     def write_bank(self, start_pointer: tuple = (0, 0, 0), information_bank: list = [[[""]]], bank_dimentions: tuple = (1, 1, 1)):
-        
+        """
+        Writes a block of data to the memory bank at the specified starting pointer.
+        Arguments:
+            start_pointer:     A tuple representing the starting memory address to write data to.
+            information_bank:  A list containing the data block to write.
+            bank_dimentions:   A tuple representing the dimensions of the data block.
+        """
         x, y, z = bank_dimentions
         sx, sy, sz = start_pointer
         if len(bank_dimentions) == 1:
@@ -297,7 +360,16 @@ class MemoryBank:
                         self._memory[row + sy][column + sx][layer + sz] = information_bank[row][column][layer]
 
 class Screen:
+    """
+    Class that manages everything related to graphic rendering
+    Arguments:
+        height:     The height of the screen in characters.
+        width:      The width of the screen in characters.
+    """
     def __init__(self, height: int, width: int):
+        """
+        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING A Screen OBJECT.
+        """
         self.height = height
         self.width = width
         self._screen = []
@@ -307,7 +379,14 @@ class Screen:
         self.color_blank = []
 
     def create_text(self, x: int, y: int, layer: int, text_data: Tuple[str, str, str]):
-        
+        """
+        Creates a text element on the screen.
+        Arguments:
+            x:          The x position to start drawing the text.
+            y:          The y position to start drawing the text.
+            layer:      The layer to draw the text on.
+            text_data:  A tuple containing the text string, foreground color code, and background color code.
+        """
         text, fg, bg = text_data
         workvar = ""
         text_pixel_data = []
@@ -329,6 +408,16 @@ class Screen:
             x += 1
 
     def create_sprite(self, x: int, y: int, layer: int, sprite_data_raw: tuple, sprite_num: int = 0, Sprite: Sprite = None):
+        """
+        Creates a sprite element on the screen.
+        Arguments:
+            x:                  The x position to start drawing the sprite.
+            y:                  The y position to start drawing the sprite.
+            layer:              The layer to draw the sprite on.
+            sprite_data_raw:    A tuple containing the raw pixel and color data of the sprite.
+            sprite_num:         The frame number of the sprite to draw (for multi-frame sprites).
+            Sprite:             The Sprite object containing the sprite's properties.
+        """
         sprite_data = sprite_data_raw
         offset = (Sprite.height * Sprite.width) * sprite_num
         if sprite_data == None or Sprite == None:
@@ -345,7 +434,14 @@ class Screen:
                         self.color_layers[y + row][x + column][layer] = "nop"
 
     def create_pixel(self, x: int, y: int, layer: int, pixel_data: Tuple[str, str, str]):
-        
+        """
+        Creates a pixel element on the screen.
+        Arguments:
+            x:          The x position to draw the pixel.
+            y:          The y position to draw the pixel.
+            layer:      The layer to draw the pixel on.
+            pixel_data: A tuple containing the pixel string, foreground color code, and background color code.
+        """
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
             return
         px, fg, bg = pixel_data
@@ -358,6 +454,15 @@ class Screen:
                 self.color_layers[y][x][layer] = f"{fg}"
     
     def set_bg(self, initx: int, inity: int, finx: int, finy: int, color: str):
+        """
+        Sets the background color for a specified area of the screen.
+        Arguments:
+            initx:  The initial x position of the area.
+            inity:  The initial y position of the area.
+            finx:   The final x position of the area.
+            finy:   The final y position of the area.
+            color:  The background color code to set.
+        """
         sizex = finx - initx
         sizey = finy - inity
         for row in range(sizey):
@@ -366,6 +471,12 @@ class Screen:
                     self.color_layers[row + inity][column + initx][0] = f"{color}"
 
     def initialize(self, layers: int, bg_color: str):
+        """
+        Initializes the screen with the specified number of layers and background color.
+        Arguments:
+            layers:    The number of layers to create.
+            bg_color:  The background color code to use.
+        """
         log("system", f"initializing Screen (w={self.width} h={self.height}, layers={layers})")
         self._layers = layers
         self._bg_color = bg_color
@@ -390,10 +501,16 @@ class Screen:
         self.color_blank = worklist 
 
     def memory_reset(self):
+        """
+        Resets the screen memory to the blank state.
+        """
         self.pixel_layers = deepcopy(self.pixel_blank)
         self.color_layers = deepcopy(self.color_blank)
 
     def bake_screen(self):
+        """
+        Bakes the current screen state into a final renderable format.
+        """
         final_bake = []
         for height_line in range(self.height):
             final_bake.append([])
@@ -416,10 +533,15 @@ class Screen:
                             pixel = pixel_layer
                             fgcolor = color_layer
                             bg = True
+                        else:
+                            pixel = "   "
+                            fgcolor = ""
                     else:
                         if pixel_layer != "nop":
                             bgcolor = color_layer
                             break
+                        else:
+                            bgcolor = ""
                 pixel_bake.append(pixel)
                 color_bake.append(bgcolor + fgcolor)
             #log("debug", f"color bake: {color_bake}\n pixel bake: {pixel_bake}")
@@ -428,6 +550,9 @@ class Screen:
         self._screen = final_bake
     
     def print_screen(self):
+        """
+        Prints the baked screen to the terminal.
+        """
         screen_print = ""
         for height_line in self._screen:
             for width_line in height_line:
@@ -437,7 +562,18 @@ class Screen:
         sys.stdout.flush()
 
 class CTkScreen:
+    """
+    Class that manages a CustomTkinter window for graphical rendering.
+    Arguments:
+        width:          The width of the window in characters.
+        height:         The height of the window in characters.
+        pixel_size:    The size of each pixel in the window.
+        core_screen:    The Screen object to render in the window.
+    """
     def __init__(self, width: int = 10, height: int = 10, pixel_size: int = 20, core_screen: Screen = None):
+        """
+        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING A CTkScreen OBJECT.
+        """
         self.width = width
         self.height = height
         self.font_size = pixel_size
@@ -451,6 +587,10 @@ class CTkScreen:
             raise Exception("CTkScreen error! - core_screen cannot be None")
 
     def _initialize_window(self, game_title: str = "PYRcade Engine Window"):
+        """
+        NOT FOR PUBLIC USE\n
+        Initializes the CustomTkinter window and its pixel grid.
+        """
         self.root = ctk.CTk(game_title)
         self.root.title(game_title)
         self.root.resizable(False, False)
@@ -468,10 +608,14 @@ class CTkScreen:
                 self.pixels[row].append(pixel)
         self.pixel_space.pack(padx = 0, pady = 0)
     
-    def _start_window(self):
+    def _start_window(self, game_title: str = "PYRcade Engine Window"):
+        """
+        NOT FOR PUBLIC USE\n
+        Starts the CustomTkinter window in a separate thread.
+        """
         self.running = True
         try:
-            self._initialize_window()
+            self._initialize_window(game_title)
             self.running = True
             self.root.mainloop()
             log("system", "CTk window closed.")
@@ -485,12 +629,19 @@ class CTkScreen:
             log("system", "CTk window closed.")
 
     def _close(self):
+        """
+        NOT FOR PUBLIC USE\n
+        Closes the CustomTkinter window and stops the thread.
+        """
         if self.running:
             self.running = False
             self.root.destroy()
             log("system", "CTk thread stopped.")
 
     def start(self):
+        """
+        Starts the CTk window thread.
+        """
         if self.thread is None:
             log("system", "starting CTk window thread...")
             self.thread = threading.Thread(target = self._start_window, daemon = True)
@@ -498,6 +649,34 @@ class CTkScreen:
             log("system", "CTk window thread started.")
         else:
             log("warning", "CTk window thread already running!")
+    
+    def update(self):
+        """
+        Updates the CTk window with the current screen data.
+        """
+        bg = False
+        if self.running:
+            for row in range(self.height):
+                for column in range(self.width):
+                    layered_pixel = self.core_screen.pixel_layers[row][column]
+                    layered_color = self.core_screen.color_layers[row][column]
+                    reversed_pixel_layers = reversed(layered_pixel)
+                    reversed_color_layers = reversed(layered_color)
+                    pixel_data = "   "
+                    pixel_color = "#ffffff"
+                    pixel_bg = "#000000"
+                    bg = False
+                    for pixel_layer, color_layer in zip(reversed_pixel_layers, reversed_color_layers):
+                        if pixel_layer != "nop" and not bg:
+                            pixel_data = pixel_layer
+                            if color_layer != "":
+                                pixel_color = ANSII_to_HEX(color_layer)
+                            bg = True
+                        elif pixel_layer != "nop" and bg:
+                            if color_layer != "":
+                                pixel_bg = ANSII_to_HEX(color_layer)
+                            break
+                    self.pixels[row][column].configure(text = pixel_data, fg_color = pixel_bg, text_color = pixel_color)
 
 default_keymap = {"up"          : pynput.keyboard.Key.up, 
                   "down"        : pynput.keyboard.Key.down,
@@ -509,7 +688,19 @@ default_keymap = {"up"          : pynput.keyboard.Key.up,
                   "backspace"   : pynput.keyboard.Key.backspace}
 
 class Arcade:
+    """
+    Class that represents an arcade machine.
+    Arguments:
+        arcade_name:    The name of the arcade machine.
+        Screen:         The Screen object to use for rendering.
+        type:           The type of arcade machine ("python_game" or "pyrcade_script_game").
+        mode:           The mode of the arcade machine ("Terminal" or "Windowed").
+        key_map:       A dictionary mapping input keys to pynput keyboard keys.
+    """
     def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], mode: Literal["Terminal", "Windowed"] = "Terminal", key_map: dict = default_keymap):
+        """
+        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING AN Arcade OBJECT.
+        """
         self.arcade_name = arcade_name
         self._screen = Screen
         self._type = type
@@ -519,7 +710,11 @@ class Arcade:
         self._engine_ver = "1.0.1"
 
     def start_machine(self, game_code = None):
-        
+        """
+        Starts the arcade machine with the provided game code function.
+        Arguments:
+            game_code: The game code function to run. MUST BE A FUNCTION THAT TAKES NO ARGUMENTS.
+        """
         log("Arcade", f"starting Arcade machine {self.arcade_name}...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
         if self._mode == "Terminal":
             if self._type == "python_game":
@@ -530,17 +725,23 @@ class Arcade:
             pass
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
-        log("Arcade", f"Arcade {self.arcade_name} started input logger")
+        """
+        MUST RUN BEFORE STARTING THE ARCADE MACHINE!\n
+        Starts the input listener for the arcade machine.
+        Arguments:
+            keys: A list of keys to listen for.
+        """
+        log("Arcade", f"Arcade {self.arcade_name} started input listener")
         self._actual_inputs = set()
         self._keys = keys
         self._input_events_buffer = []
-        def input_logger_press(keypressed):
+        def input_listener_press(keypressed):
             for key in self._keys:
                 if self._key_map[key] == keypressed:
                     self._actual_inputs.add(key)
-        def input_logger_release(keyrelease):
+        def input_listener_release(keyrelease):
             for key in self._keys:
                 if self._key_map[key] == keyrelease:
                     self._actual_inputs.discard(key)
-        listener = pynput.keyboard.Listener(on_press = input_logger_press, on_release = input_logger_release)
+        listener = pynput.keyboard.Listener(on_press = input_listener_press, on_release = input_listener_release)
         listener.start()
