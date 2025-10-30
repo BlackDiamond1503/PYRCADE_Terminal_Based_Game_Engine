@@ -287,7 +287,7 @@ def tetris_loop():
                     pass
             if check_piece_collitions(random_piece, x, y, rotation, "D", 1) and y <= 0:
                 gameover = True
-            log("info", f"selected {random_piece.name} at frame {frame_counter}")
+            log("info", f"Selected piece '{random_piece.name}' at frame {frame_counter}")
             x = 8
             y = -2
 
