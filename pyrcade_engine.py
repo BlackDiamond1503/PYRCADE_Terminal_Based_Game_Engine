@@ -395,6 +395,7 @@ class Screen:
         self.color_layers = []
         self.pixel_blank = []
         self.color_blank = []
+        self._pixel_mode = None
 
     def create_text(self, x: int, y: int, layer: int, text_data: Tuple[str, str, str]):
         """
@@ -531,43 +532,43 @@ class Screen:
         """
         Bakes the current screen state into a final renderable format.
         """
-        final_bake = []
-        for height_line in range(self.height):
-            final_bake.append([])
-            pixel_bake = []
-            color_bake = []
-            layered_pixel = ""
-            layered_color = ""
-            for width_line in range(self.width):
-                bg = False
-                pixel = "   "
-                fgcolor = "nop"
-                bgcolor = self.color_layers[height_line][width_line][0]
-                layered_pixel = self.pixel_layers[height_line][width_line]
-                layered_color = self.color_layers[height_line][width_line]
-                reversed_pixel_layers = reversed(layered_pixel)
-                reversed_color_layers = reversed(layered_color)
-                for pixel_layer, color_layer in zip(reversed_pixel_layers, reversed_color_layers):
-                    if not bg:
-                        if pixel_layer != "nop":
-                            pixel = pixel_layer
-                            fgcolor = color_layer
-                            bg = True
+            final_bake = []
+            for height_line in range(self.height):
+                final_bake.append([])
+                pixel_bake = []
+                color_bake = []
+                layered_pixel = ""
+                layered_color = ""
+                for width_line in range(self.width):
+                    bg = False
+                    pixel = "   "
+                    fgcolor = "nop"
+                    bgcolor = self.color_layers[height_line][width_line][0]
+                    layered_pixel = self.pixel_layers[height_line][width_line]
+                    layered_color = self.color_layers[height_line][width_line]
+                    reversed_pixel_layers = reversed(layered_pixel)
+                    reversed_color_layers = reversed(layered_color)
+                    for pixel_layer, color_layer in zip(reversed_pixel_layers, reversed_color_layers):
+                        if not bg:
+                            if pixel_layer != "nop":
+                                pixel = pixel_layer
+                                fgcolor = color_layer
+                                bg = True
+                            else:
+                                pixel = "   "
+                                fgcolor = ""
                         else:
-                            pixel = "   "
-                            fgcolor = ""
-                    else:
-                        if pixel_layer != "nop":
-                            bgcolor = color_layer
-                            break
-                        else:
-                            bgcolor = ""
-                pixel_bake.append(pixel)
-                color_bake.append(bgcolor + fgcolor)
-            #log("debug", f"color bake: {color_bake}\n pixel bake: {pixel_bake}")
-            for item in range(len(pixel_bake)):
-                final_bake[height_line].append(color_bake[item] + pixel_bake[item] + "\033[0m")
-        self._screen = final_bake
+                            if pixel_layer != "nop":
+                                bgcolor = color_layer
+                                break
+                            else:
+                                bgcolor = ""
+                    pixel_bake.append(pixel)
+                    color_bake.append(bgcolor + fgcolor)
+                #log("debug", f"color bake: {color_bake}\n pixel bake: {pixel_bake}")
+                for item in range(len(pixel_bake)):
+                    final_bake[height_line].append(color_bake[item] + pixel_bake[item] + "\033[0m")
+            self._screen = final_bake
     
     def print_screen(self):
         """
@@ -739,23 +740,26 @@ default_keymap = {"up"          : pynput.keyboard.Key.up,
                   "backspace"   : pynput.keyboard.Key.backspace}
 
 class Arcade:
-    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], mode: Literal["Terminal", "Windowed"] = "Terminal", key_map: dict = default_keymap):
+    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], render_mode: Literal["Terminal", "Windowed"] = "Terminal", render_res: Literal["Pixel", "Sub-Pixel"] = "Pixel", key_map: dict = default_keymap):
         """
         Class that represents an arcade machine.
         Arguments:
             arcade_name:    The name of the arcade machine.
             Screen:         The Screen object to use for rendering.
             type:           The type of arcade machine ("python_game" or "pyrcade_script_game").
-            mode:           The mode of the arcade machine ("Terminal" or "Windowed").
+            render_mode:    The mode of the arcade machine ("Terminal" or "Windowed").
+            render_res:     The resolution mode of the arcade machine ("Pixel" or "Sub-Pixel").
             key_map:       A dictionary mapping input keys to pynput keyboard keys.
         """
         self.arcade_name = arcade_name
         self._screen = Screen
         self._type = type
-        self._mode = mode
+        self._mode = render_mode
         self.input = ""
         self._key_map = key_map
         self._engine_ver = "1.0.1"
+        self._screen._pixel_mode = render_res
+        self.window_manager = None
 
     def start_machine(self, game_code = None):
         """
