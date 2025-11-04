@@ -1,9 +1,10 @@
 from pyrcade_engine import *
 
+DEBUG = True
 # tetris example in python (full potential)
 tetris_screen = Screen(20, 20)
 frame_counter = 0
-tetris = Arcade("pyrcade_tetris", tetris_screen, "python_game", "Terminal")
+tetris = Arcade("pyrcade_tetris", tetris_screen, "python_game", "Windowed")
 def tetris_loop():
     global frame_counter
     #tetris pieces sprites
@@ -384,10 +385,11 @@ def tetris_loop():
 
         tetris_screen.bake_screen()
         tetris_screen.print_screen()
+        tetris.window_manager.update()
         #print(tetris._actual_inputs, x, y, piece, rotation, random_piece.name)
         #log("info", f"random piece is: {random_piece.name} at frame {frame_counter}\npiece is active?: {piece}")
         time.sleep(0.1)
-        if gameover:
+        if gameover or not tetris.window_manager.running:
             break
 
         #log("info", f"layer 1 dump:\n{layer_1_pixel}")
