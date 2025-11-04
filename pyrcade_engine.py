@@ -30,7 +30,7 @@ def log(level: Literal["initial", "system", "warning", "info", "error", "arcade"
         try:
             if log_filename == "":
                 log_filename = f"logs/pyrcade_log_{timestamp}.txt"
-            with open(log_filename, "a") as log_file:
+            with open(log_filename, "a", encoding="utf-8") as log_file:
                 log_file.write(log_message)
                 return
         except Exception as e:
@@ -93,10 +93,12 @@ def ANSII_to_HEX(color_str: str):
     color_code = ""
     for i in range(len(color_str) - 7):
         if color_str[i + 7] == "m":
-            color_code = int(color_code)
             break
         else:
             color_code += color_str[i + 7]
+    if color_code == "":
+        return "#000000"
+    color_code = int(color_code)
     if 0 <= color_code <= 15:
         basic_colors = ["#000000", "#800000", "#008000", "#808000", "#000080", "#800080", "#008080", "#c0c0c0",
                         "#808080", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff"]
@@ -113,8 +115,7 @@ def ANSII_to_HEX(color_str: str):
     elif 232 <= color_code <= 255:
         shades = ["08", "12", "1c", "26", "30", "3a", "44", "4e", "58", "62", "6c", "76", "80", "8a", "94", "9e", "a8", "b2", "bc", "c6", "d0", "da", "e4", "ee"]
         grayidx = color_code - 232
-        shadeid = 8 + grayidx * 10
-        shade = shades[shadeid - 8]
+        shade = shades[grayidx]
         hex_grey = f"#{shade}{shade}{shade}"
         return hex_grey
     return "#000000"
@@ -134,7 +135,16 @@ class Sprite:
     """
     def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "single_custom", "pixel_custom"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1, extra_val_1 = None, extra_val_2 = None, extra_val_3 = None):
         """
-        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING A Sprite OBJECT.
+        Main sprite class for handling sprite graphic data.
+        Arguments:
+            name:           The name of the sprite.
+            width:          The width of the sprite in pixels.
+            height:         The height of the sprite in pixels.
+            sprite_data:    A list of strings representing the pixel data of the sprite.
+            color_mode:     The color mode of the sprite ("single", "pixel", "single_custom", "pixel_custom").
+            color_data:     A list of strings representing the color data of the sprite.
+            sprite_mode:    The sprite mode ("single" for single-frame sprites, "multi" for multi-frame sprites).
+            sprite_cuantity:The number of frames in the sprite (only for multi-frame sprites).
         """
         self.width = width
         self.height = height
@@ -179,6 +189,7 @@ class Sprite:
                 log("error", f"invalid color code: preset lookup failed.\n    sprite_name: {self.name}\n    color_mode: {self._color_mode}\n    color_data: {color_data}")
         
         self.readable_data = (sprite_data, color_data)
+        log("info", f"sprite initialized:\n    sprite_name: {self.name}\n    width: {self.width}\n    height: {self.height}\n    color_mode: {self._color_mode}\n    sprite_mode: {self.sprite_mode}\n    sprite_cuantity: {self._sprite_cuantity}\n    data_dump:\n        pixel_data: {self.readable_data[0]}\n        color_data: {self.readable_data[1]}\n ")
 
     def load_raw(self, frame = 0):
         """
@@ -187,8 +198,6 @@ class Sprite:
         Arguments:
             frame:  The frame number to load (for multi-frame sprites).
         """
-        if self._valid_data == False:
-            return
         pixel_data = self.readable_data[0]                                                 
         color_data = self.readable_data[1]                                                 
         pixel_raw_data = []
@@ -233,7 +242,7 @@ class Sprite:
                     else:
                         pixel_raw_data.append("nop")
                         color_raw_data.append("")
-        #log("info", f"sprite_raw_data dump\n    sprite_name: {self.name}\n    pixel_raw_data: {pixel_raw_data}\n    color_raw_data: {color_raw_data}\n ")
+        log("info", f"sprite_raw_data dump\n    sprite_name: {self.name}\n    pixel_raw_data: {pixel_raw_data}\n    color_raw_data: {color_raw_data}\n ")
         return (pixel_raw_data, color_raw_data)   
     
 class MemoryBank:
@@ -248,7 +257,13 @@ class MemoryBank:
     """
     def __init__(self, type: Literal["1d", "2d", "3d"] = "1d", read_only: bool = False, dimentions: str = "10", default_value: Literal[0, ""] = 0):
         """
-        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING A MemoryBank OBJECT.
+        NOT FINISHED NOR TESTED
+        1D, 2D and 3D memory bank class for data storage and retrieval.
+        Arguments:
+            type:           The type of memory bank ("1d", "2d", "3d").
+            read_only:      If true, the memory bank is read-only.
+            dimentions:     A string representing the dimensions of the memory bank (e.g., "10", "10x10", "10x10x10").
+            default_value:  The default value to initialize the memory bank with.
         """
         self._type = type
         self._writable = not read_only
@@ -368,7 +383,10 @@ class Screen:
     """
     def __init__(self, height: int, width: int):
         """
-        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING A Screen OBJECT.
+        Class that manages everything related to graphic rendering
+        Arguments:
+            height:     The height of the screen in characters.
+            width:      The width of the screen in characters.
         """
         self.height = height
         self.width = width
@@ -418,6 +436,8 @@ class Screen:
             sprite_num:         The frame number of the sprite to draw (for multi-frame sprites).
             Sprite:             The Sprite object containing the sprite's properties.
         """
+        log("debug", f"creating sprite on screen:\n    x: {x}\n    y: {y}\n    layer: {layer}\n    sprite_num: {sprite_num}\n    sprite_name: {Sprite.name if Sprite != None else 'N/A'}")
+        log("debug", f"sprite_data_raw dump:\n    pixel_data: {sprite_data_raw[0]}\n    color_data: {sprite_data_raw[1]}")
         sprite_data = sprite_data_raw
         offset = (Sprite.height * Sprite.width) * sprite_num
         if sprite_data == None or Sprite == None:
@@ -572,39 +592,50 @@ class CTkScreen:
     """
     def __init__(self, width: int = 10, height: int = 10, pixel_size: int = 20, core_screen: Screen = None):
         """
-        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING A CTkScreen OBJECT.
+        Class that manages a CustomTkinter window for graphical rendering.
+        Arguments:
+            width:          The width of the window in characters.
+            height:         The height of the window in characters.
+            pixel_size:    The size of each pixel in the window.
+            core_screen:    The Screen object to render in the window.
         """
+        self.root = None
         self.width = width
         self.height = height
         self.font_size = pixel_size
         self.pixels = []
         self.thread = None
         self.running = False
-        self.font = ctk.CTkFont(family = "Consolas", size = self.font_size)
         if core_screen != None:
             self.core_screen = core_screen
         else:
             raise Exception("CTkScreen error! - core_screen cannot be None")
+    
+    def _full_update(self):
+        if self.running:
+            self._needs_full_update = True
 
-    def _initialize_window(self, game_title: str = "PYRcade Engine Window"):
+    def _initialize_window(self, game_title):
         """
         NOT FOR PUBLIC USE\n
         Initializes the CustomTkinter window and its pixel grid.
         """
-        self.root = ctk.CTk(game_title)
+        self.root = ctk.CTk()
+        self.font = ctk.CTkFont(family = "Consolas", size = self.font_size, weight = "bold")
         self.root.title(game_title)
         self.root.resizable(False, False)
         self.root.protocol("WM_DELETE_WINDOW", self._close)
         self.pixel_space = ctk.CTkFrame(self.root, fg_color = "#000000")
         for i in range(self.width):
-            self.pixel_space.grid_columnconfigure(i, weight = 1)
+            self.pixel_space.grid_columnconfigure(i, weight = 1, minsize = 1)
         for i in range(self.height):    
-            self.pixel_space.grid_rowconfigure(i, weight = 1)
+            self.pixel_space.grid_rowconfigure(i, weight = 1, minsize = 1, pad = 0)
         for row in range(self.height):
             self.pixels.append([])
             for column in range(self.width):
-                pixel = ctk.CTkLabel(self.pixel_space, bg_color = "#000000", font = self.font, text = "   ")
-                pixel.grid(row = row, column = column, padx = 0, pady = 0, sticky = "nsew")
+                pixel = ctk.CTkLabel(self.pixel_space, bg_color = "#000000", font = self.font, text = "   ", corner_radius = 0)
+                pixel.configure(padx = 0, pady = 0)
+                pixel.grid(row = row, column = column, padx = 0, pady = 0)
                 self.pixels[row].append(pixel)
         self.pixel_space.pack(padx = 0, pady = 0)
     
@@ -615,7 +646,7 @@ class CTkScreen:
         """
         self.running = True
         try:
-            self._initialize_window(game_title)
+            self._initialize_window(game_title = game_title)
             self.running = True
             self.root.mainloop()
             log("system", "CTk window closed.")
@@ -635,6 +666,7 @@ class CTkScreen:
         """
         if self.running:
             self.running = False
+            self.root.quit()
             self.root.destroy()
             log("system", "CTk thread stopped.")
 
@@ -646,14 +678,18 @@ class CTkScreen:
             log("system", "starting CTk window thread...")
             self.thread = threading.Thread(target = self._start_window, daemon = True)
             self.thread.start()
+            self.running = True
             log("system", "CTk window thread started.")
         else:
             log("warning", "CTk window thread already running!")
     
-    def update(self):
+    def _do_update(self):
         """
+        NOT FOR PUBLIC USE\n
+        NOT THREAD SAFE\n
         Updates the CTk window with the current screen data.
         """
+
         bg = False
         if self.running:
             for row in range(self.height):
@@ -664,7 +700,7 @@ class CTkScreen:
                     reversed_color_layers = reversed(layered_color)
                     pixel_data = "   "
                     pixel_color = "#ffffff"
-                    pixel_bg = "#000000"
+                    pixel_bg = ANSII_to_HEX(layered_color[0])
                     bg = False
                     for pixel_layer, color_layer in zip(reversed_pixel_layers, reversed_color_layers):
                         if pixel_layer != "nop" and not bg:
@@ -675,8 +711,23 @@ class CTkScreen:
                         elif pixel_layer != "nop" and bg:
                             if color_layer != "":
                                 pixel_bg = ANSII_to_HEX(color_layer)
-                            break
-                    self.pixels[row][column].configure(text = pixel_data, fg_color = pixel_bg, text_color = pixel_color)
+                                break
+                            else:
+                                continue
+                    previus_pixel = self.pixels[row][column].cget("text")
+                    previus_color = self.pixels[row][column].cget("text_color")
+                    previus_background = self.pixels[row][column].cget("fg_color")
+                    if previus_pixel != pixel_data or previus_color != pixel_color or previus_background != pixel_bg:
+                        self.pixels[row][column].configure(text = pixel_data, text_color = pixel_color, fg_color = pixel_bg)
+                    else:
+                        continue
+
+    def update(self):
+        """
+        Updates the CTk window with the current screen data in a thread-safe manner.
+        """
+        if self.running and self.root:
+            self.root.after_idle(self._do_update)
 
 default_keymap = {"up"          : pynput.keyboard.Key.up, 
                   "down"        : pynput.keyboard.Key.down,
@@ -715,14 +766,30 @@ class Arcade:
         Arguments:
             game_code: The game code function to run. MUST BE A FUNCTION THAT TAKES NO ARGUMENTS.
         """
-        log("Arcade", f"starting Arcade machine {self.arcade_name}...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
+        self.window_manager = CTkScreen(width = self._screen.width, height = self._screen.height, pixel_size = 20, core_screen = self._screen)
+        self.window_manager.start()
         if self._mode == "Terminal":
             if self._type == "python_game":
+                log("Arcade", f"starting Arcade machine {self.arcade_name}...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
                 sys.stdout.write("\033[2J\033[H")
                 sys.stdout.flush()
                 game_code()
         elif self._mode == "Windowed":
-            pass
+            if self._type == "python_game" and game_code:
+                log("Arcade", f"starting Arcade machine {self.arcade_name} in Windowed mode...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}\n    mode: {self._mode}")
+                time.sleep(0.5) 
+
+                self.game_thread = threading.Thread(target=game_code, daemon=True)
+                self.game_thread.start()
+                log("Arcade", "Game logic thread started.")
+                
+                while self.window_manager.running:
+                    time.sleep(0.1)
+                
+                log("Arcade", "Window closed. Exiting machine.")
+            
+            else:
+                log("error", "Cannot start Windowed mode: game_code not provided or type is incorrect.")
     
     def start_input(self, keys: list = ["up", "down", "left", "right", "space", "esc"]):
         """
