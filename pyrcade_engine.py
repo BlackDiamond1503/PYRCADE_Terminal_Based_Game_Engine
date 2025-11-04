@@ -739,18 +739,15 @@ default_keymap = {"up"          : pynput.keyboard.Key.up,
                   "backspace"   : pynput.keyboard.Key.backspace}
 
 class Arcade:
-    """
-    Class that represents an arcade machine.
-    Arguments:
-        arcade_name:    The name of the arcade machine.
-        Screen:         The Screen object to use for rendering.
-        type:           The type of arcade machine ("python_game" or "pyrcade_script_game").
-        mode:           The mode of the arcade machine ("Terminal" or "Windowed").
-        key_map:       A dictionary mapping input keys to pynput keyboard keys.
-    """
     def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], mode: Literal["Terminal", "Windowed"] = "Terminal", key_map: dict = default_keymap):
         """
-        DO NOT USE THIS YOU ABSOLUTE MORON, IT AUTOMATICALLY INITIALIZES WHEN CREATING AN Arcade OBJECT.
+        Class that represents an arcade machine.
+        Arguments:
+            arcade_name:    The name of the arcade machine.
+            Screen:         The Screen object to use for rendering.
+            type:           The type of arcade machine ("python_game" or "pyrcade_script_game").
+            mode:           The mode of the arcade machine ("Terminal" or "Windowed").
+            key_map:       A dictionary mapping input keys to pynput keyboard keys.
         """
         self.arcade_name = arcade_name
         self._screen = Screen
