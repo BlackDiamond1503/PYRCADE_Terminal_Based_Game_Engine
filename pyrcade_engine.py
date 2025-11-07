@@ -532,7 +532,8 @@ class Screen:
         """
         Bakes the current screen state into a final renderable format.
         """
-            final_bake = []
+        final_bake = []
+        if self._pixel_mode == "pixel":
             for height_line in range(self.height):
                 final_bake.append([])
                 pixel_bake = []
@@ -568,7 +569,9 @@ class Screen:
                 #log("debug", f"color bake: {color_bake}\n pixel bake: {pixel_bake}")
                 for item in range(len(pixel_bake)):
                     final_bake[height_line].append(color_bake[item] + pixel_bake[item] + "\033[0m")
-            self._screen = final_bake
+        elif self._pixel_mode == "sub-pixel":
+            pass
+        self._screen = final_bake
     
     def print_screen(self):
         """
@@ -740,7 +743,7 @@ default_keymap = {"up"          : pynput.keyboard.Key.up,
                   "backspace"   : pynput.keyboard.Key.backspace}
 
 class Arcade:
-    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], render_mode: Literal["Terminal", "Windowed"] = "Terminal", render_res: Literal["Pixel", "Sub-Pixel"] = "Pixel", key_map: dict = default_keymap):
+    def __init__(self, arcade_name: str, Screen: Screen, type: Literal["python_game", "pyrcade_script_game"], render_mode: Literal["Terminal", "Windowed"] = "Terminal", render_res: Literal["pixel", "sub-pixel"] = "pixel", key_map: dict = default_keymap):
         """
         Class that represents an arcade machine.
         Arguments:
@@ -767,8 +770,6 @@ class Arcade:
         Arguments:
             game_code: The game code function to run. MUST BE A FUNCTION THAT TAKES NO ARGUMENTS.
         """
-        self.window_manager = CTkScreen(width = self._screen.width, height = self._screen.height, pixel_size = 20, core_screen = self._screen)
-        self.window_manager.start()
         if self._mode == "Terminal":
             if self._type == "python_game":
                 log("Arcade", f"starting Arcade machine {self.arcade_name}...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}")
@@ -776,6 +777,8 @@ class Arcade:
                 sys.stdout.flush()
                 game_code()
         elif self._mode == "Windowed":
+            self.window_manager = CTkScreen(width = self._screen.width, height = self._screen.height, pixel_size = 20, core_screen = self._screen)
+            self.window_manager.start()
             if self._type == "python_game" and game_code:
                 log("Arcade", f"starting Arcade machine {self.arcade_name} in Windowed mode...\n    Arcade info:\n    name: {self.arcade_name}\n    type: {self._type}\n    mode: {self._mode}")
                 time.sleep(0.5) 

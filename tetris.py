@@ -1,5 +1,5 @@
 from pyrcade_engine import *
-
+DEBUG = False
 # tetris example in python (full potential)
 tetris_screen = Screen(20, 20)
 frame_counter = 0
