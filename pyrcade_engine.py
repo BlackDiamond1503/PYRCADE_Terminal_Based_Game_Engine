@@ -569,8 +569,39 @@ class Screen:
                 #log("debug", f"color bake: {color_bake}\n pixel bake: {pixel_bake}")
                 for item in range(len(pixel_bake)):
                     final_bake[height_line].append(color_bake[item] + pixel_bake[item] + "\033[0m")
+
         elif self._pixel_mode == "sub-pixel":
-            pass
+            for height_line in range(self.height // 2):
+                final_bake.append([])
+                pixel_bake = []
+                color_bake = []
+                layered_pixel = ""
+                layered_color = ""
+                for width_line in range(self.width):
+                    for ypixel in range(2):
+                        bg = False
+                        pixel = "   "
+                        fgcolor = "nop"
+                        bgcolor = self.color_layers[height_line * 2 + ypixel][width_line][0]
+                        layered_pixel = self.pixel_layers[height_line * 2 + ypixel][width_line]
+                        layered_color = self.color_layers[height_line * 2 + ypixel][width_line]
+                        reversed_pixel_layers = reversed(layered_pixel)
+                        reversed_color_layers = reversed(layered_color)
+                        for pixel_layer, color_layer in zip(reversed_pixel_layers, reversed_color_layers):
+                            if not bg:
+                                if pixel_layer != "nop":
+                                    pixel = pixel_layer
+                                    fgcolor = color_layer
+                                    bg = True
+                                else:
+                                    pixel = "   "
+                                    fgcolor = ""
+                            else:
+                                if pixel_layer != "nop":
+                                    bgcolor = color_layer
+                                    break
+                                else:
+                                    bgcolor = ""
         self._screen = final_bake
     
     def print_screen(self):
