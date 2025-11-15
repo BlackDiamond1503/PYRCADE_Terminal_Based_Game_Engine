@@ -121,18 +121,6 @@ def ANSII_to_HEX(color_str: str):
     return "#000000"
 
 class Sprite:
-    """
-    Main sprite class for handling sprite graphic data.
-    Arguments:
-        name:           The name of the sprite.
-        width:          The width of the sprite in pixels.
-        height:         The height of the sprite in pixels.
-        sprite_data:    A list of strings representing the pixel data of the sprite.
-        color_mode:     The color mode of the sprite ("single", "pixel", "single_custom", "pixel_custom").
-        color_data:     A list of strings representing the color data of the sprite.
-        sprite_mode:    The sprite mode ("single" for single-frame sprites, "multi" for multi-frame sprites).
-        sprite_cuantity:The number of frames in the sprite (only for multi-frame sprites).
-    """
     def __init__(self, name: str, width: int, height: int, sprite_data: list[str], color_mode: Literal["single", "pixel", "single_custom", "pixel_custom"] = "single", color_data: list[str] = None, sprite_mode: Literal["single", "multi"] = "single", sprite_cuantity: int = 1, extra_val_1 = None, extra_val_2 = None, extra_val_3 = None):
         """
         Main sprite class for handling sprite graphic data.
@@ -246,15 +234,6 @@ class Sprite:
         return (pixel_raw_data, color_raw_data)   
     
 class MemoryBank:
-    """
-    NOT FINISHED NOR TESTED
-    1D, 2D and 3D memory bank class for data storage and retrieval.
-    Arguments:
-        type:           The type of memory bank ("1d", "2d", "3d").
-        read_only:      If true, the memory bank is read-only.
-        dimentions:     A string representing the dimensions of the memory bank (e.g., "10", "10x10", "10x10x10").
-        default_value:  The default value to initialize the memory bank with.
-    """
     def __init__(self, type: Literal["1d", "2d", "3d"] = "1d", read_only: bool = False, dimentions: str = "10", default_value: Literal[0, ""] = 0):
         """
         NOT FINISHED NOR TESTED
@@ -375,12 +354,6 @@ class MemoryBank:
                         self._memory[row + sy][column + sx][layer + sz] = information_bank[row][column][layer]
 
 class Screen:
-    """
-    Class that manages everything related to graphic rendering
-    Arguments:
-        height:     The height of the screen in characters.
-        width:      The width of the screen in characters.
-    """
     def __init__(self, height: int, width: int):
         """
         Class that manages everything related to graphic rendering
@@ -617,14 +590,6 @@ class Screen:
         sys.stdout.flush()
 
 class CTkScreen:
-    """
-    Class that manages a CustomTkinter window for graphical rendering.
-    Arguments:
-        width:          The width of the window in characters.
-        height:         The height of the window in characters.
-        pixel_size:    The size of each pixel in the window.
-        core_screen:    The Screen object to render in the window.
-    """
     def __init__(self, width: int = 10, height: int = 10, pixel_size: int = 20, core_screen: Screen = None):
         """
         Class that manages a CustomTkinter window for graphical rendering.
